@@ -1,45 +1,43 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using RetailManagementSystem.DataAccess.Repository;
 using RetailManagementSystem.DataAccess.Repository.IRepository;
+using RetailManagementSystem.Utility;
 using RetailManagementSystem.Models.Models;
 using RetailManagementSystem.Models.Models.Admin;
 using RetailManagementSystem.Models.Models.Delivery;
 using RetailManagementSystem.Models.Models.DTO;
 using RetailManagementSystem.Models.Models.Retailer;
 using RetailManagementSystem.Models.Models.Store;
-using RetailManagementSystem.Utility;
+using RetailManagementSystem.Services.IServices;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace RetailManagementSystem.Controllers
+namespace RetailManagementSystem.Services
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthServices : IAuthServices
     {
         private readonly IUnitOfWork _unitOfWork;
         private ApiResponse _response;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        private string SecretKey;
-        public AuthController(IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<ApplicationUser> userManager, 
+        public AuthServices(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager)
         {
             _unitOfWork = unitOfWork;
             _response = new ApiResponse();
-            SecretKey = configuration.GetValue<string>("ApiSettings:Secret");
             _userManager = userManager;
             _roleManager = roleManager;
         }
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
+        public async Task<ApiResponse> LoginSV(LoginRequestDTO model, string SecretKey)
         {
             ApplicationUser userFromDb = _unitOfWork.ApplicationUser.GetAll()
                 .FirstOrDefault(x => x.UserName.ToLower() == model.Username.ToLower());
@@ -50,7 +48,7 @@ namespace RetailManagementSystem.Controllers
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = ["Username or Password is Incorrect !!!"];
-                return BadRequest(_response);
+                return _response;
             }
             var Roles = await _userManager.GetRolesAsync(userFromDb);
             JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
@@ -74,26 +72,22 @@ namespace RetailManagementSystem.Controllers
             LoginResponseDTO loginResponse = new LoginResponseDTO()
             {
                 Email = userFromDb.Email,
-                Role = Roles.FirstOrDefault(),
                 Token = handler.WriteToken(token)
             };
-            if(loginResponse.Email == null || string.IsNullOrEmpty(loginResponse.Token))
+            if (loginResponse.Email == null || string.IsNullOrEmpty(loginResponse.Token))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = ["Error in Loging In !!!"];
-                return BadRequest(_response);
+                return _response;
             }
             _response.StatusCode = HttpStatusCode.OK;
             _response.IsSuccess = true;
             _response.Result = loginResponse;
-            return Ok(_response);
-
+            return _response;
         }
-        
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromForm] RegisterRequestDTO model)
+        public async Task<ApiResponse> RegisterSV(RegisterRequestDTO model, string SecretKey)
         {
             ApplicationUser userFromDb = _unitOfWork.ApplicationUser.GetAll()
                 .FirstOrDefault(x => x.UserName.ToLower() == model.Username.ToLower());
@@ -104,9 +98,9 @@ namespace RetailManagementSystem.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages = ["Username Already Exists!!!"];
-                    return BadRequest(_response);
+                    return _response;
                 }
-                
+
                 ApplicationUser newUser = new ApplicationUser()
                 {
                     UserName = model.Username,
@@ -192,12 +186,12 @@ namespace RetailManagementSystem.Controllers
                             _response.StatusCode = HttpStatusCode.BadRequest;
                             _response.IsSuccess = false;
                             _response.ErrorMessages = new List<string> { "Invalid role provided" };
-                            return BadRequest(_response);
+                            return _response;
                     }
                     _unitOfWork.Save();
                     _response.StatusCode = HttpStatusCode.OK;
                     _response.IsSuccess = true;
-                    return Ok(_response);
+                    return _response;
                 }
             }
             catch (Exception ex)
@@ -206,13 +200,13 @@ namespace RetailManagementSystem.Controllers
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
 
-                return BadRequest(_response);
+                return _response;
             }
             _response.StatusCode = HttpStatusCode.BadRequest;
             _response.IsSuccess = false;
             _response.ErrorMessages.Add("Error While Registering User!!!");
 
-            return BadRequest(_response);
+            return _response;
         }
     }
 }

@@ -9,6 +9,7 @@ namespace RetailManagementSystem.DataAccess.Repository.IRepository
     public interface IUnitOfWork
     {
         public ICategoryRepository Category { get; }
+        public ISubCategoryRepository SubCategory { get; }
         public IProductRepository Product { get; }
         public IAdvertisementRepository Advertisement { get; }
         public IApplicationUserRepository ApplicationUser { get; }

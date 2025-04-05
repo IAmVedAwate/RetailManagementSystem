@@ -16,7 +16,7 @@ namespace RetailManagementSystem.Models.Models.DTO
         public string Status { get; set; }
         public DateTime DeliveryDate { get; set; }
         public string Instructions { get; set; }
-        public string Photo { get; set; }
+        public string Phone2 { get; set; }
         public string GoogleMapLocation { get; set; }
     }
 }

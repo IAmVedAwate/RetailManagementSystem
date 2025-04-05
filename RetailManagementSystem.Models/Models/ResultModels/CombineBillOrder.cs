@@ -56,7 +56,6 @@ namespace RetailManagementSystem.Models.Models.ResultModels
         public string ProductDescription { get; set; }
         public decimal RetailPrice { get; set; }
         public decimal MRP { get; set; }
-        public int QuantityInBox { get; set; }
         public string Category { get; set; }
     }
 

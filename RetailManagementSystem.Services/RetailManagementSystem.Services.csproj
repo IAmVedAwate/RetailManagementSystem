@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RetailManagementSystem.DataAccess\RetailManagementSystem.DataAccess.csproj" />
     <ProjectReference Include="..\RetailManagementSystem.Models\RetailManagementSystem.Models.csproj" />
+    <ProjectReference Include="..\RetailManagementSystem.Utility\RetailManagementSystem.Utility.csproj" />
   </ItemGroup>
 
 </Project>

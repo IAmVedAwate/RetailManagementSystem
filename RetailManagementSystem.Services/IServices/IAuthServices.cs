@@ -9,11 +9,9 @@ using System.Threading.Tasks;
 
 namespace RetailManagementSystem.Services.IServices
 {
-    public interface ICategoryServices
+    public interface IAuthServices
     {
-        public ApiResponse GetCategoriesSV();
-        public ApiResponse CreateCategorySV(CategoryDTO createCategoryDTO);
-        public ApiResponse UpdateCategorySV(int id, CategoryDTO updateCategoryDTO);
-        public ApiResponse DeleteCategorySV(int id);
+        public Task<ApiResponse> LoginSV(LoginRequestDTO model, string SecretKey);
+        public Task<ApiResponse> RegisterSV(RegisterRequestDTO model, string SecretKey);
     }
 }

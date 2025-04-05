@@ -22,6 +22,6 @@ namespace RetailManagementSystem.Models.Models.Store
         public float TotalAmount { get; set; }
         public string PaymentStatus { get; set; } = "Pending";
         public DateTime DateGenerated { get; set; }
-
+        public string billName { get; set; }
     }
 }

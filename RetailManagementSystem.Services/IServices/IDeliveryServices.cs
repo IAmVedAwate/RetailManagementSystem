@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace RetailManagementSystem.Services.IServices
 {
-    public interface ICategoryServices
+    public interface IDeliveryServices
     {
-        public ApiResponse GetCategoriesSV();
-        public ApiResponse CreateCategorySV(CategoryDTO createCategoryDTO);
-        public ApiResponse UpdateCategorySV(int id, CategoryDTO updateCategoryDTO);
-        public ApiResponse DeleteCategorySV(int id);
+        public ApiResponse GetDeliveriesSV();
+        public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, int userId);
+        public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, int userId);
+        public ApiResponse GetReturnSV(string index);
     }
 }

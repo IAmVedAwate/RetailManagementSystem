@@ -15,5 +15,6 @@ namespace RetailManagementSystem.Models.Models.DTO
         public float TotalAmount { get; set; }
         public string PaymentStatus { get; set; }
         public DateTime DateGenerated { get; set; }
+        public string billName { get; set; }
     }
 }

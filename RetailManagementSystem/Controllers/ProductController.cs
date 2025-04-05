@@ -18,20 +18,18 @@ namespace RetailManagementSystem.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private ApiResponse _response;
-        private IWebHostEnvironment _webHostEnvironment;
         private IBlobService _blobService;
-        public ProductController(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment, IBlobService blobService)
+        public ProductController(IUnitOfWork unitOfWork, IBlobService blobService)
         {
             _unitOfWork = unitOfWork;
             _response = new ApiResponse();
-            _webHostEnvironment = webHostEnvironment;
             _blobService = blobService;
         }
         [HttpGet]
         [Authorize(Roles=SD.Role_Admin)]
         public async Task<IActionResult> GetProducts()
         {
-            _response.Result = _unitOfWork.Product.GetAll(includeProperties: ["Category"]);
+            _response.Result = _unitOfWork.Product.GetAll(includeProperties: ["SubCategory"]);
             _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
@@ -43,11 +41,11 @@ namespace RetailManagementSystem.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var categoryExists = _unitOfWork.Category.Get(u=> u.Id == createProductDTO.CategoryId);
+                    var categoryExists = _unitOfWork.SubCategory.Get(u=> u.Id == createProductDTO.SubCategoryId);
                     if (categoryExists==null)
                     {
                         _response.IsSuccess = false;
-                        _response.ErrorMessages = new List<string>() { "Invalid CategoryId" };
+                        _response.ErrorMessages = new List<string>() { "Invalid SubCategoryId" };
                         return BadRequest(_response);
                     }
                     if (createProductDTO.File == null || createProductDTO.File.Length == 0)
@@ -63,11 +61,10 @@ namespace RetailManagementSystem.Controllers
                         ProductDescription = createProductDTO.ProductDescription,
                         RetailPrice = createProductDTO.RetailPrice,
                         MRP = createProductDTO.MRP,
-                        QuantityInBox = createProductDTO.QuantityInBox,
                         IsFamous = createProductDTO.IsFamous,
                         IsRecommended = createProductDTO.IsRecommended,
                         IsReplaceable = createProductDTO.IsReplaceable,
-                        CategoryId = createProductDTO.CategoryId,
+                        SubCategoryId = createProductDTO.SubCategoryId,
                         Image = await _blobService.UploadBlob(fileName, SD.Storage_Container, createProductDTO.File)
                     };
                     _unitOfWork.Product.Add(product);
@@ -113,11 +110,10 @@ namespace RetailManagementSystem.Controllers
                     product.ProductDescription = updateProductDTO.ProductDescription;
                     product.RetailPrice = updateProductDTO.RetailPrice;
                     product.MRP = updateProductDTO.MRP;
-                    product.QuantityInBox = updateProductDTO.QuantityInBox;
                     product.IsFamous = updateProductDTO.IsFamous;
                     product.IsRecommended = updateProductDTO.IsRecommended;
                     product.IsReplaceable = updateProductDTO.IsReplaceable;
-                    product.CategoryId = updateProductDTO.CategoryId;
+                    product.SubCategoryId = updateProductDTO.SubCategoryId;
 
                     string fileName = $"{Guid.NewGuid()}{Path.GetExtension(updateProductDTO.File.FileName)}";
                     product.Image = await _blobService.UploadBlob(fileName, SD.Storage_Container, updateProductDTO.File);

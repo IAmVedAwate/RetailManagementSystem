@@ -18,14 +18,10 @@ namespace RetailManagementSystem.Models.Models.Delivery
         [ForeignKey(nameof(BillId))]
         [ValidateNever]
         public Bill Bill { get; set; }
-        public int DeliveryUserId { get; set; }
-        [ForeignKey(nameof(DeliveryUserId))]
-        [ValidateNever]
-        public DeliveryUser DeliveryUser { get; set; }
         public string Status { get; set; }
         public DateTime DeliveryDate { get; set; }
         public string Instructions { get; set; }
-        public string Photo { get; set; }
+        public string Phone2 { get; set; }
         public string GoogleMapLocation { get; set; }
     }
 }

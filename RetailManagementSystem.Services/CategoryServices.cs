@@ -52,19 +52,19 @@ namespace RetailManagementSystem.Services
             return _response;
         }
 
-        public ApiResponse UpdateCategorySV(Category updateCategory)
+        public ApiResponse UpdateCategorySV(int id, CategoryDTO updateCategoryDTO)
         {
             // Converting DTO into main Category
             // REASON: To save the category in Database and prevent from user let know the main structure of model.
-            Category category = new Category()
-            {
-                CategoryName = updateCategory.CategoryName,
-                CategoryDescription = updateCategory.CategoryDescription
-            };
+            Category category = _unitOfWork.Category.Get(u => u.Id == id);
+
+            category.CategoryName = updateCategoryDTO.CategoryName;
+            category.CategoryDescription = updateCategoryDTO.CategoryDescription;
+            
             _unitOfWork.Category.Update(category);
             _unitOfWork.Save();
 
-            _response.Result = updateCategory;
+            _response.Result = updateCategoryDTO;
             _response.StatusCode = HttpStatusCode.Accepted;
             return _response;
         }

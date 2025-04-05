@@ -18,12 +18,11 @@ namespace RetailManagementSystem.Models.Models.DTO
         public string ProductDescription { get; set; }
         public int RetailPrice { get; set; }
         public int MRP { get; set; }
-        public int QuantityInBox { get; set; }
         public bool IsReplaceable { get; set; }
         public bool IsRecommended { get; set; }
         public bool IsFamous { get; set; }
         [Required]
-        public int CategoryId { get; set; }
+        public int SubCategoryId { get; set; }
         public IFormFile File { get; set; }
     }
 }

@@ -14,32 +14,32 @@ namespace RetailManagementSystem.Controllers
 {
     [Route("api/admin/[controller]")]
     [ApiController]
-    public class CategoryController : ControllerBase
+    public class SubCategoryController : ControllerBase
     {
         private ApiResponse _response;
         private IUnitOfServices _unitOfServices;
-        public CategoryController(IUnitOfServices unitOfServices)
+        public SubCategoryController(IUnitOfServices unitOfServices)
         {
             _response = new ApiResponse();
             _unitOfServices = unitOfServices;
         }
         [HttpGet]
-        [Authorize(Roles = SD.Role_Admin)]
-        public async Task<IActionResult> GetCategories()
+        [Authorize(Roles=SD.Role_Admin)]
+        public async Task<IActionResult> GetSubCategories()
         {
-            ApiResponse result = _unitOfServices.CategoryService.GetCategoriesSV();
+            ApiResponse result = _unitOfServices.SubCategoryService.GetSubCategoriesSV();
             return Ok(result);
         }
         [HttpPost]
-        [Authorize(Roles = SD.Role_Admin)]
+        [Authorize(Roles=SD.Role_Admin)]
 
-        public async Task<IActionResult> CreateCategory([FromForm] CategoryDTO createCategoryDTO)
+        public async Task<IActionResult> CreateSubCategory([FromForm] SubCategoryDTO createSubCategoryDTO)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    ApiResponse result = _unitOfServices.CategoryService.CreateCategorySV(createCategoryDTO);
+                    ApiResponse result = _unitOfServices.SubCategoryService.CreateSubCategorySV(createSubCategoryDTO);
                     _response = result;
                 }
                 else
@@ -58,14 +58,14 @@ namespace RetailManagementSystem.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = SD.Role_Admin)]
-        public async Task<IActionResult> UpdateCategory(int id, [FromForm] CategoryDTO updateCategoryDTO)
+        [Authorize(Roles=SD.Role_Admin)]
+        public async Task<IActionResult> UpdateSubCategory(int id, [FromForm] SubCategoryDTO updateSubCategoryDTO)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    ApiResponse result = _unitOfServices.CategoryService.UpdateCategorySV(id, updateCategoryDTO);
+                    ApiResponse result = _unitOfServices.SubCategoryService.UpdateSubCategorySV(id , updateSubCategoryDTO);
                     _response = result;
                 }
                 else
@@ -85,13 +85,13 @@ namespace RetailManagementSystem.Controllers
 
         [HttpDelete("{id:int}")]
         [Authorize(Roles=SD.Role_Admin)]
-        public async Task<IActionResult> DeleteCategory(int id)
+        public async Task<IActionResult> DeleteSubCategory(int id)
         {
             try
             {
                 if (id!=null || id!=0)
                 {
-                    ApiResponse result = _unitOfServices.CategoryService.DeleteCategorySV(id);
+                    ApiResponse result = _unitOfServices.SubCategoryService.DeleteSubCategorySV(id);
                     _response = result;
                 }
                 else

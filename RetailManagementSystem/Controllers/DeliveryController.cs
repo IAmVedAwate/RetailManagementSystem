@@ -48,7 +48,7 @@ namespace RetailManagementSystem.Controllers
         public async Task<IActionResult> GetDeliveries()
         {
             IEnumerable<Bill> AllBills = _unitOfWork.Bill.GetAll(includeProperties: ["StoreUser"]);
-            IEnumerable<Order> AllOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.Category","Stock.Warehouse", "Bill"]);
+            IEnumerable<Order> AllOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.SubCategory","Stock.Warehouse", "Bill"]);
             List<DeliveryDetailedResult> CombinedResult = AllBills.Select(bill =>
             {
             List<OrderFromBill> OrdersFromBill = AllOrders.Where(order => order.Bill == bill).Select(order =>
@@ -59,8 +59,7 @@ namespace RetailManagementSystem.Controllers
                     ProductDescription = order.Stock.Product.ProductDescription,
                     RetailPrice = order.Stock.Product.RetailPrice,
                     MRP = order.Stock.Product.MRP,
-                    QuantityInBox = order.Stock.Product.QuantityInBox,
-                    Category = order.Stock.Product.Category.CategoryName
+                    Category = order.Stock.Product.SubCategory.SubCategoryName
                 };
                 
                 StockData stockData = new StockData()
@@ -123,11 +122,10 @@ namespace RetailManagementSystem.Controllers
                     Delivery delivery = new Delivery()
                     {
                         BillId = billFromDb.Id,
-                        DeliveryUserId = deliveryId,
                         Status = deliveryDTO.Status,
                         DeliveryDate = deliveryDTO.DeliveryDate,
                         Instructions = deliveryDTO.Instructions,
-                        Photo = deliveryDTO.Photo,
+                        Phone2 = deliveryDTO.Phone2,
                         GoogleMapLocation = deliveryDTO.GoogleMapLocation,
 
                     };
@@ -176,9 +174,9 @@ namespace RetailManagementSystem.Controllers
                     var deliveryId = InitializeDeliveryId();
                     Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == submitReturnsDTO.OrderId, includeProperties: ["Stock"]);
                     var billIdFromDb = _unitOfWork.Order.Get(u => u.Id == submitReturnsDTO.OrderId).BillId;
-                    var deliveryIdFromDb = _unitOfWork.Delivery.Get(u => u.BillId == billIdFromDb).DeliveryUserId;
-                    if (deliveryId != 0 && deliveryId == deliveryIdFromDb)
-                    {
+                    //var deliveryIdFromDb = _unitOfWork.Delivery.Get(u => u.BillId == billIdFromDb).DeliveryUserId;
+                    //if (deliveryId != 0 && deliveryId == deliveryIdFromDb)
+                    //{
                         if (orderFromDb.Stock.IsReturnable)
                         {
                             Return returns = new Return()
@@ -207,13 +205,13 @@ namespace RetailManagementSystem.Controllers
                             return Ok(_response);
                         }
                         
-                    }
-                    else
-                    {
-                        _response.IsSuccess = false;
-                        _response.StatusCode = HttpStatusCode.Unauthorized;
-                        return Ok(_response);
-                    }
+                    //}
+                    //else
+                    //{
+                    //    _response.IsSuccess = false;
+                    //    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    //    return Ok(_response);
+                    //}
                 }
                 else
                 {

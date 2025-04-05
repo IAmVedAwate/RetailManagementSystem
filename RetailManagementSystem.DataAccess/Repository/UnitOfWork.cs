@@ -13,6 +13,7 @@ namespace RetailManagementSystem.DataAccess.Repository
     {
         private readonly ApplicationDbContext _db;
         public ICategoryRepository Category { get; private set; }
+        public ISubCategoryRepository SubCategory { get; private set; }
         public IProductRepository Product { get; private set; }
         public IAdvertisementRepository Advertisement { get; private set; }
         public IApplicationUserRepository ApplicationUser { get; private set; }
@@ -35,6 +36,7 @@ namespace RetailManagementSystem.DataAccess.Repository
             Advertisement = new AdvertisementRepository(_db);
             ApplicationUser = new ApplicationUserRepository(_db);
             Category = new CategoryRepository(_db);
+            SubCategory = new SubCategoryRepository(_db);
             Feedback = new FeedbackRepository(_db);
             Product = new ProductRepository(_db);
             Delivery = new DeliveryRepository(_db);

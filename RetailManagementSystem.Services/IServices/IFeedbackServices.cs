@@ -9,11 +9,9 @@ using System.Threading.Tasks;
 
 namespace RetailManagementSystem.Services.IServices
 {
-    public interface ICategoryServices
+    public interface IFeedbackServices
     {
-        public ApiResponse GetCategoriesSV();
-        public ApiResponse CreateCategorySV(CategoryDTO createCategoryDTO);
-        public ApiResponse UpdateCategorySV(int id, CategoryDTO updateCategoryDTO);
-        public ApiResponse DeleteCategorySV(int id);
+        public ApiResponse GetFeedbacksSV();
+        public ApiResponse SubmitFeedbackSV(FeedbackDTO submitFeedbackDTO, string userId);
     }
 }

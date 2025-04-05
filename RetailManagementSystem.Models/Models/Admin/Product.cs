@@ -18,14 +18,13 @@ namespace RetailManagementSystem.Models.Models.Admin
         public string ProductDescription { get; set; }
         public int RetailPrice { get; set; }
         public int MRP { get; set; }
-        public int QuantityInBox { get; set; }
         public bool IsReplaceable { get; set; }
         public bool IsRecommended { get; set; }
         public bool IsFamous { get; set; }
-        public int CategoryId { get; set; }
-        [ForeignKey("CategoryId")]
+        public int SubCategoryId { get; set; }
+        [ForeignKey("SubCategoryId")]
         [ValidateNever]
-        public Category Category { get; set; }
+        public SubCategory SubCategory { get; set; }
         public string Image {  get; set; }
     }
 }
