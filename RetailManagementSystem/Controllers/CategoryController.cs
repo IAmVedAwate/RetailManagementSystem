@@ -24,7 +24,7 @@ namespace RetailManagementSystem.Controllers
             _unitOfServices = unitOfServices;
         }
         [HttpGet]
-        [Authorize(Roles = SD.Role_Admin)]
+        [Authorize]
         public async Task<IActionResult> GetCategories()
         {
             ApiResponse result = _unitOfServices.CategoryService.GetCategoriesSV();

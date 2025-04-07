@@ -10,6 +10,7 @@ using System.Security.Claims;
 using RetailManagementSystem.Models.Models.Retailer;
 using Microsoft.AspNetCore.Authorization;
 using RetailManagementSystem.Utility;
+using RetailManagementSystem.Services.IServices;
 
 namespace RetailManagementSystem.Controllers
 {
@@ -17,70 +18,27 @@ namespace RetailManagementSystem.Controllers
     [ApiController]
     public class BillController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private IUnitOfServices _unitOfServices;
         private ApiResponse _response;
-        public BillController(IUnitOfWork unitOfWork)
+        public BillController(IUnitOfServices unitOfServices)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfServices = unitOfServices;
             _response = new ApiResponse();
-        }
-
-        private int InitializeStoreId()
-        {
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            if (email != null)
-            {
-                var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
-                return BillOwner.Id;
-            }
-            else
-            {
-                return 0;
-            }
         }
 
         [HttpGet]
         [Authorize(Roles=SD.Role_Store)]
         public async Task<IActionResult> GetBills()
         {
-            var billOwnerId = InitializeStoreId();
-            if (billOwnerId != 0)
-            {
-                _response.Result = _unitOfWork.Bill.GetAll(u=> u.StoreId == billOwnerId, includeProperties: ["StoreUser"]);
-                _response.StatusCode = HttpStatusCode.OK;
-            }
-            else
-            {
-                _response.StatusCode= HttpStatusCode.Unauthorized;
-                _response.IsSuccess = false;
-            }
-            return Ok(_response);
+            ApiResponse result = _unitOfServices.BillService.GetBillsSV(Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
         }
         [HttpGet("Order")]
-        [Authorize(Roles=SD.Role_Store)]
+        [Authorize]
         public async Task<IActionResult> GetBill([FromQuery]string index)
         {
-            var billOwnerId = InitializeStoreId();
-            if (billOwnerId != 0)
-            {
-                Bill bill = _unitOfWork.Bill.Get(u => u.StoreId == billOwnerId && u.indexForBill == index, includeProperties: ["StoreUser"]);
-                if (bill != null)
-                {
-                    _response.Result = _unitOfWork.Order.GetAll(u => u.BillId == bill.Id, includeProperties: ["Bill"]);
-                    _response.StatusCode = HttpStatusCode.OK;
-                }
-                else
-                {
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
-                    _response.IsSuccess = false;
-                }
-            }
-            else
-            {
-                _response.StatusCode = HttpStatusCode.Unauthorized;
-                _response.IsSuccess = false;
-            }
-            return Ok(_response);
+            ApiResponse result = _unitOfServices.BillService.GetBillSV(index,Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
         }
 
         [HttpPost]
@@ -91,49 +49,21 @@ namespace RetailManagementSystem.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    // Create Warehouse Object Here
-                    Bill newBill = new Bill();
-                    var billOwnerId = InitializeStoreId();
-                    if (billOwnerId != 0)
-                    {
-                        newBill.TotalAmount = (float)createBillDTO.orders.Select(order => order.TotalAmount).Sum();
-                        newBill.DateGenerated = DateTime.Now;
-                        newBill.StoreId = billOwnerId;
-                        _unitOfWork.Bill.Add(newBill);
-                        _unitOfWork.Save();
-                    }
-                    else
-                    {
-                        _response.StatusCode = HttpStatusCode.Unauthorized;
-                        _response.IsSuccess = false;
-                    }
-                    
-
-                    var orderEntities = createBillDTO.orders.Select(order => new Order
-                    {
-                        StockId = order.StockId,
-                        Quantity = order.Quantity,
-                        TotalAmount = order.TotalAmount,
-                        BillId = newBill.Id,
-                    }).ToList();
-
-                    _unitOfWork.Order.AddRange(orderEntities);
-                    _response.Result = orderEntities;
-                    _response.StatusCode = HttpStatusCode.Created;
+                    ApiResponse result = _unitOfServices.BillService.CreateBillSV(createBillDTO, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+                    _response = result;
                 }
                 else
                 {
+                    _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                 }
             }
             catch (Exception ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return BadRequest(_response);
             }
-            _unitOfWork.Save();
             return Ok(_response);
         }
 
@@ -145,43 +75,21 @@ namespace RetailManagementSystem.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var billOwnerId = InitializeStoreId();
-                    if(billOwnerId != 0)
-                    {
-                        Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == id);
-                        IEnumerable<Order> orderEntries = _unitOfWork.Order.GetAll(u => u.BillId == orderFromDb.BillId);
-                        Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == orderFromDb.BillId);
-                        orderFromDb.StockId = updateBillDTO.StockId;
-                        orderFromDb.Quantity = updateBillDTO.Quantity;
-                        orderFromDb.TotalAmount = updateBillDTO.TotalAmount;
-
-                        billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum();
-
-                        _unitOfWork.Order.Update(orderFromDb);
-                        _unitOfWork.Bill.Update(billFromDb);
-
-                        _response.Result = updateBillDTO;
-                        _response.StatusCode = HttpStatusCode.Created;
-                    }
-                    else
-                    {
-                        _response.StatusCode = HttpStatusCode.Unauthorized;
-                        _response.IsSuccess = false;
-                    }
+                    ApiResponse result = _unitOfServices.BillService.UpdateBillSV(id, updateBillDTO, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+                    _response = result;
                 }
                 else
                 {
+                    _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                 }
             }
             catch (Exception ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return BadRequest(_response);
             }
-            _unitOfWork.Save();
             return Ok(_response);
         }
 
@@ -191,21 +99,19 @@ namespace RetailManagementSystem.Controllers
         {
             try
             {
-                Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == id);
-                IEnumerable<Order> orderEntries = _unitOfWork.Order.GetAll(u => u.BillId == orderFromDb.BillId);
-                Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == orderFromDb.BillId);
-                billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum() - orderFromDb.TotalAmount;
-
-                _unitOfWork.Order.Remove(orderFromDb);
-                _unitOfWork.Bill.Update(billFromDb);
-
-                _unitOfWork.Save();
-                _response.Result = "Deleted Successfully !! ";
-                _response.StatusCode = HttpStatusCode.OK;
+                if (id != null || id != 0)
+                {
+                    ApiResponse result = _unitOfServices.BillService.DeleteOrderSV(id, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+                    _response = result;
+                }
+                else
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                }
             }
             catch (Exception ex)
             {
-                _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return BadRequest(_response);
@@ -217,18 +123,25 @@ namespace RetailManagementSystem.Controllers
         [Authorize(Roles=SD.Role_Store)]
         public async Task<IActionResult> DeleteBill(int id)
         {
-            Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == id);
-            var billOwnerId = InitializeStoreId();
-            if (billFromDb.StoreId == billOwnerId)
+            try
             {
-                IEnumerable<Order> orders = _unitOfWork.Order.GetAll(u => u.BillId == billFromDb.Id);
-                _unitOfWork.Order.RemoveRange(orders);
-                _unitOfWork.Bill.Remove(billFromDb);
-                _unitOfWork.Save();
-                _response.Result = "Deleted Successfully !! ";
-                _response.StatusCode = HttpStatusCode.OK;
+                if (id != null || id != 0)
+                {
+                    ApiResponse result = _unitOfServices.BillService.DeleteBillSV(id, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+                    _response = result;
+                }
+                else
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                }
             }
-            
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return BadRequest(_response);
+            }
             return Ok(_response);
         }
     }

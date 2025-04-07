@@ -72,7 +72,8 @@ namespace RetailManagementSystem.Services
             LoginResponseDTO loginResponse = new LoginResponseDTO()
             {
                 Email = userFromDb.Email,
-                Token = handler.WriteToken(token)
+                Token = handler.WriteToken(token),
+                Role = Roles.FirstOrDefault()
             };
             if (loginResponse.Email == null || string.IsNullOrEmpty(loginResponse.Token))
             {

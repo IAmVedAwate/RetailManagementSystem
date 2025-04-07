@@ -24,8 +24,23 @@ namespace RetailManagementSystem.Services
             _response = new ApiResponse();
         }
 
-        public ApiResponse GetWarehouseSV(int userId)
+        public ApiResponse GetAllWarehousesSV(int subId)
         {
+            IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.Product.SubCategoryId == subId, 
+                includeProperties: ["Product.SubCategory"]);
+            _response.Result = stocksFromDb;
+            _response.StatusCode = HttpStatusCode.OK;
+            return (_response);
+        }
+
+        public ApiResponse GetWarehouseSV(string email)
+        {
+            var userId = 0;
+            if (email != null)
+            {
+                var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
+                userId = mainWarehouseOwner?.WarehouseId ?? 0;
+            }
             IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.WarehouseId == userId, includeProperties: ["Product"]);
             _response.Result = stocksFromDb.Select(stock => new Stock
             {
@@ -42,11 +57,17 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, int userId)
+        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, string email)
         {
             try
             {
                 // Create Warehouse Object Here
+                var userId = 0;
+                if (email != null)
+                {
+                    var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
+                    userId = mainWarehouseOwner?.WarehouseId ?? 0;
+                }
                 var count = 1;
                 var stockEntities = addWarehouseDTO.Stocks.Select(stock =>
                 {
@@ -79,10 +100,16 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse EditStockInWarehouseSV(int indexId, StockDTO editWarehouseDTO, int userId)
+        public ApiResponse EditStockInWarehouseSV(int indexId, StockDTO editWarehouseDTO, string email)
         {
             try
             {
+                var userId = 0;
+                if (email != null)
+                {
+                    var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
+                    userId = mainWarehouseOwner?.WarehouseId ?? 0;
+                }
                 Stock stockFromDb = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.IndexForDeletion == indexId);
 
                 stockFromDb.ProductId = editWarehouseDTO.ProductId;
@@ -107,8 +134,14 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse RemoveStockSV(int indexId, int userId)
+        public ApiResponse RemoveStockSV(int indexId, string email)
         {
+            var userId = 0;
+            if (email != null)
+            {
+                var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
+                userId = mainWarehouseOwner?.WarehouseId ?? 0;
+            }
             Stock stockForDeletion = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.IndexForDeletion == indexId);
             _unitOfWork.Stock.Remove(stockForDeletion);
             _unitOfWork.Save();

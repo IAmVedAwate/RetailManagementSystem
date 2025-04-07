@@ -16,22 +16,33 @@ namespace RetailManagementSystem.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private IUnitOfServices _unitOfServices;
         private ApiResponse _response;
-        private IBlobService _blobService;
-        public ProductController(IUnitOfWork unitOfWork, IBlobService blobService)
+        public ProductController(IUnitOfServices unitOfServices)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfServices = unitOfServices;
             _response = new ApiResponse();
-            _blobService = blobService;
         }
         [HttpGet]
         [Authorize(Roles=SD.Role_Admin)]
         public async Task<IActionResult> GetProducts()
         {
-            _response.Result = _unitOfWork.Product.GetAll(includeProperties: ["SubCategory"]);
-            _response.StatusCode = HttpStatusCode.OK;
-            return Ok(_response);
+            ApiResponse result = _unitOfServices.ProductService.GetProductsSV();
+            return Ok(result);
+        }
+        [HttpGet("productById/{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> GetProductById(int id)
+        {
+            ApiResponse result = _unitOfServices.ProductService.GetProductByIdSV(id);
+            return Ok(result);
+        }
+        [HttpGet("random")]
+        [Authorize]
+        public async Task<IActionResult> GetRandomProducts()
+        {
+            ApiResponse result = _unitOfServices.ProductService.GetRandomProductsSV();
+            return Ok(result);
         }
         [HttpPost]
         [Authorize(Roles=SD.Role_Admin)]
@@ -41,114 +52,8 @@ namespace RetailManagementSystem.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    var categoryExists = _unitOfWork.SubCategory.Get(u=> u.Id == createProductDTO.SubCategoryId);
-                    if (categoryExists==null)
-                    {
-                        _response.IsSuccess = false;
-                        _response.ErrorMessages = new List<string>() { "Invalid SubCategoryId" };
-                        return BadRequest(_response);
-                    }
-                    if (createProductDTO.File == null || createProductDTO.File.Length == 0)
-                    {
-                        return BadRequest();
-                    }
-                    
-                    string fileName = $"{Guid.NewGuid()}{Path.GetExtension(createProductDTO.File.FileName)}";
-                    // Upload the new image
-                    Product product = new Product()
-                    {
-                        ProductName = createProductDTO.ProductName,
-                        ProductDescription = createProductDTO.ProductDescription,
-                        RetailPrice = createProductDTO.RetailPrice,
-                        MRP = createProductDTO.MRP,
-                        IsFamous = createProductDTO.IsFamous,
-                        IsRecommended = createProductDTO.IsRecommended,
-                        IsReplaceable = createProductDTO.IsReplaceable,
-                        SubCategoryId = createProductDTO.SubCategoryId,
-                        Image = await _blobService.UploadBlob(fileName, SD.Storage_Container, createProductDTO.File)
-                    };
-                    _unitOfWork.Product.Add(product);
-                    _response.Result = product;
-                    _response.StatusCode = HttpStatusCode.Created;
-                }
-                else
-                {
-                    _response.IsSuccess = false;
-                }
-            }
-            catch (Exception ex)
-            {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-                return BadRequest(_response);
-            }
-            _unitOfWork.Save();
-            return Ok(_response);
-        }
-        [HttpPut("{id:int}", Name = "UpdateProduct")]
-        [Authorize(Roles=SD.Role_Admin)]
-        public async Task<IActionResult> UpdateProduct(int id,[FromForm] ProductDTO updateProductDTO)
-        {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    if (updateProductDTO.File == null || updateProductDTO.File.Length == 0)
-                    {
-                        return BadRequest();
-                    }
-                    var oldFileName = _unitOfWork.Product.Get(u=>u.Id == id).Image.ToString();
-                    var existingBlob = await _blobService.GetBlob(oldFileName, SD.Storage_Container);
-
-                    if (existingBlob != null)
-                    {
-                        // Delete the existing blob (old image)
-                        await _blobService.DeleteBlob(oldFileName.Split("/").Last(), SD.Storage_Container);
-                    }
-                    Product product = _unitOfWork.Product.Get(u=>u.Id == id);
-                    product.ProductName = updateProductDTO.ProductName;
-                    product.ProductDescription = updateProductDTO.ProductDescription;
-                    product.RetailPrice = updateProductDTO.RetailPrice;
-                    product.MRP = updateProductDTO.MRP;
-                    product.IsFamous = updateProductDTO.IsFamous;
-                    product.IsRecommended = updateProductDTO.IsRecommended;
-                    product.IsReplaceable = updateProductDTO.IsReplaceable;
-                    product.SubCategoryId = updateProductDTO.SubCategoryId;
-
-                    string fileName = $"{Guid.NewGuid()}{Path.GetExtension(updateProductDTO.File.FileName)}";
-                    product.Image = await _blobService.UploadBlob(fileName, SD.Storage_Container, updateProductDTO.File);
-
-                    _unitOfWork.Product.Update(product);
-                    _response.Result = product;
-                    _response.StatusCode = HttpStatusCode.Created;
-                }
-                else
-                {
-                    _response.IsSuccess = false;
-                }
-            }
-            catch (Exception ex)
-            {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-                return BadRequest(_response);
-            }
-            _unitOfWork.Save();
-            return Ok(_response);
-        }
-        [HttpDelete]
-        [Authorize(Roles=SD.Role_Admin)]
-        public async Task<IActionResult> DeleteProduct([FromForm] int id)
-        {
-            try
-            {
-                if (id != null || id != 0)
-                {
-
-                    Product deletableProduct = _unitOfWork.Product.Get(u => u.Id == id);
-                    await _blobService.DeleteBlob(deletableProduct.Image.Split("/").Last(), SD.Storage_Container);
-                    _unitOfWork.Product.Remove(deletableProduct);
-                    _response.StatusCode = HttpStatusCode.Accepted;
+                    ApiResponse result = await _unitOfServices.ProductService.CreateProductSV(createProductDTO);
+                    _response = result;
                 }
                 else
                 {
@@ -162,7 +67,56 @@ namespace RetailManagementSystem.Controllers
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return BadRequest(_response);
             }
-            _unitOfWork.Save();
+            return Ok(_response);
+        }
+        [HttpPut("{id:int}", Name = "UpdateProduct")]
+        [Authorize(Roles=SD.Role_Admin)]
+        public async Task<IActionResult> UpdateProduct(int id,[FromForm] ProductDTO updateProductDTO)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    ApiResponse result = await _unitOfServices.ProductService.UpdateProductSV(id, updateProductDTO);
+                    _response = result;
+                }
+                else
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return BadRequest(_response);
+            }
+            return Ok(_response);
+        }
+        [HttpDelete]
+        [Authorize(Roles=SD.Role_Admin)]
+        public async Task<IActionResult> DeleteProduct([FromForm] int id)
+        {
+            try
+            {
+                if (id != null || id != 0)
+                {
+                    ApiResponse result = await _unitOfServices.ProductService.DeleteProductSV(id);
+                    _response = result;
+                }
+                else
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return BadRequest(_response);
+            }
             return Ok(_response);
         }
     }

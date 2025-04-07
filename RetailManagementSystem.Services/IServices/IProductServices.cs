@@ -12,6 +12,8 @@ namespace RetailManagementSystem.Services.IServices
     public interface IProductServices
     {
         public ApiResponse GetProductsSV();
+        public ApiResponse GetRandomProductsSV();
+        public ApiResponse GetProductByIdSV(int id);
         public Task<ApiResponse> CreateProductSV(ProductDTO createProductDTO);
         public Task<ApiResponse> UpdateProductSV(int id, ProductDTO updateProductDTO);
         public Task<ApiResponse> DeleteProductSV(int id);

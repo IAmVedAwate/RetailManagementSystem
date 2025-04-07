@@ -39,6 +39,53 @@ namespace RetailManagementSystem.Services
                 return (_response);
             }
         }
+        public ApiResponse GetProductByIdSV(int id)
+        {
+            try
+            {
+                _response.Result = _unitOfWork.Product.Get(u=> u.Id==id,includeProperties: ["SubCategory"]);
+                _response.StatusCode = HttpStatusCode.OK;
+                return (_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return (_response);
+            }
+        }
+
+        public ApiResponse GetRandomProductsSV()
+        {
+            try
+            {
+                int count = _unitOfWork.SubCategory.CountAll();
+                if (count == null || count== 0)
+                {
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string> { "No subcategories found." };
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return _response;
+                }
+
+                // Create a random index (0-based index)
+                Random random = new Random();
+                int randomIndex = random.Next(1, count);  // Generates a number between 1 and count
+
+                // Retrieve products that belong to the randomly selected subcategory
+                IEnumerable<Product> products = _unitOfWork.Product.GetAll(p => p.SubCategoryId == randomIndex, includeProperties: ["SubCategory"]);
+
+                _response.Result = products;
+                _response.StatusCode = HttpStatusCode.OK;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.ToString() };
+                return _response;
+            }
+        }
         public async Task<ApiResponse> CreateProductSV(ProductDTO createProductDTO)
         {
             try

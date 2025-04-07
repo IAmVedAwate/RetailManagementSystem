@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,16 +23,23 @@ namespace RetailManagementSystem.Services
             _unitOfWork = unitOfWork;
             _response = new ApiResponse();
         }
+            
         public ApiResponse GetAdvertisementsSV()
         {
             _response.Result = _unitOfWork.Advertisement.GetAll();
             _response.StatusCode = HttpStatusCode.OK;
             return _response;
         }
-        public ApiResponse CreateAdvertisementSV(AdvertisementDTO createAdvertisementDTO, int userId)
+        public ApiResponse CreateAdvertisementSV(AdvertisementDTO createAdvertisementDTO, string email)
         {
             try
             {
+                int userId = 0;
+                if (email != null)
+                {
+                    var Admin = _unitOfWork.AdminUser.Get(u => u.Email == email);
+                    userId = Admin.Id;
+                }
                 Advertisement advertisement = new Advertisement()
                 {
                     AdContent = createAdvertisementDTO.AdContent,

@@ -12,6 +12,7 @@ namespace RetailManagementSystem.Models.Models.DTO
     public class OrderDTO
     {
         public int StockId { get; set; }
+        public int BillId { get; set; }
         public int Quantity { get; set; }
         public float TotalAmount { get; set; }
     }

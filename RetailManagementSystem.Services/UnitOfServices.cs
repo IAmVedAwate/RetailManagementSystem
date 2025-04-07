@@ -30,6 +30,7 @@ namespace RetailManagementSystem.Services
         public IAuthServices AuthService { get; private set; }
 
         public IBillServices BillService { get; private set; }
+
         public IDeliveryServices DeliveryService { get; private set; }
 
         private readonly IUnitOfWork _unitOfWork;
@@ -48,6 +49,7 @@ namespace RetailManagementSystem.Services
             FeedbackService = new FeedbackServices(_unitOfWork);
             ProductService = new ProductServices(_unitOfWork, _blobService);
             WarehouseService = new WarehouseServices(_unitOfWork);
+            BillService = new BillServices(unitOfWork);
             AdvertisementService = new AdvertisementServices(_unitOfWork);
             AuthService = new AuthServices(_unitOfWork, _userManager, _roleManager);
             DeliveryService = new DeliveryServices(unitOfWork);

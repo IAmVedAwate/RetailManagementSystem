@@ -12,9 +12,10 @@ namespace RetailManagementSystem.Services.IServices
 {
     public interface IWarehouseServices
     {
-        public ApiResponse GetWarehouseSV(int userId);
-        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, int userId);
-        public ApiResponse EditStockInWarehouseSV(int indexId, StockDTO editWarehouseDTO, int userId);
-        public ApiResponse RemoveStockSV(int indexId, int userId);
+        public ApiResponse GetAllWarehousesSV(int subId);
+        public ApiResponse GetWarehouseSV(string email);
+        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, string email);
+        public ApiResponse EditStockInWarehouseSV(int indexId, StockDTO editWarehouseDTO, string email);
+        public ApiResponse RemoveStockSV(int indexId, string email);
     }
 }

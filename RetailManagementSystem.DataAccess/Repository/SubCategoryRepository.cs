@@ -21,5 +21,10 @@ namespace RetailManagementSystem.DataAccess.Repository
         {
             _db.SubCategories.Update(subCategory);
         }
+        public int CountAll()
+        {
+            var count = _db.SubCategories.Count();
+            return count;
+        }
     }
 }

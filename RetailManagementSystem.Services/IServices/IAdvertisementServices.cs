@@ -12,7 +12,7 @@ namespace RetailManagementSystem.Services.IServices
     public interface IAdvertisementServices
     {
         public ApiResponse GetAdvertisementsSV();
-        public ApiResponse CreateAdvertisementSV(AdvertisementDTO createAdvertisementDTO, int userId);
+        public ApiResponse CreateAdvertisementSV(AdvertisementDTO createAdvertisementDTO, string email);
         public ApiResponse UpdateAdvertisementSV(int id, AdvertisementDTO updateAdvertisementDTO);
         public ApiResponse DeleteAdvertisementSV(int id);
     }

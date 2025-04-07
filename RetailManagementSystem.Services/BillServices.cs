@@ -24,9 +24,14 @@ namespace RetailManagementSystem.Services
             _response = new ApiResponse();
         }
 
-        public ApiResponse GetBillsSV(int userId)
+        public ApiResponse GetBillsSV(string email)
         {
-            var billOwnerId = userId;
+            var billOwnerId = 0;
+            if (email != null)
+            {
+                var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                if(BillOwner!=null) billOwnerId = BillOwner.Id;
+            }
             if (billOwnerId != 0)
             {
                 _response.Result = _unitOfWork.Bill.GetAll(u => u.StoreId == billOwnerId, includeProperties: ["StoreUser"]);
@@ -40,15 +45,20 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse GetBillSV(string index, int userId)
+        public ApiResponse GetBillSV(string index, string email)
         {
-            var billOwnerId = userId;
+            var billOwnerId = 0;
+            if (email != null)
+            {
+                var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                billOwnerId = BillOwner.Id;
+            }
             if (billOwnerId != 0)
             {
                 Bill bill = _unitOfWork.Bill.Get(u => u.StoreId == billOwnerId && u.indexForBill == index, includeProperties: ["StoreUser"]);
                 if (bill != null)
                 {
-                    _response.Result = _unitOfWork.Order.GetAll(u => u.BillId == bill.Id, includeProperties: ["Bill"]);
+                    _response.Result = _unitOfWork.Order.GetAll(u => u.BillId == bill.Id, includeProperties: ["Bill","Stock.Product.SubCategory"]);
                     _response.StatusCode = HttpStatusCode.OK;
                 }
                 else
@@ -65,18 +75,24 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse CreateBillSV(BillDTO createBillDTO, int userId)
+        public ApiResponse CreateBillSV(BillDTO createBillDTO, string email)
         {
             try
             {
                 
                 // Create Warehouse Object Here
                 Bill newBill = new Bill();
-                var billOwnerId = userId;
+                var billOwnerId = 0;
+                if (email != null)
+                {
+                    var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                    billOwnerId = BillOwner.Id;
+                }
                 if (billOwnerId != 0)
                 {
                     newBill.TotalAmount = (float)createBillDTO.orders.Select(order => order.TotalAmount).Sum();
                     newBill.DateGenerated = DateTime.Now;
+                    newBill.billName = createBillDTO.billName;
                     newBill.StoreId = billOwnerId;
                     _unitOfWork.Bill.Add(newBill);
                     _unitOfWork.Save();
@@ -112,26 +128,42 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse UpdateBillSV(int id, OrderDTO updateBillDTO, int userId)
+        public ApiResponse UpdateBillSV(int id, OrderDTO updateBillDTO, string email)
         {
             try
             {
-                var billOwnerId = userId;
+                var billOwnerId = 0;
+                if (email != null)
+                {
+                    var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                    billOwnerId = BillOwner.Id;
+                }
                 if (billOwnerId != 0)
                 {
                     Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == id);
-                    IEnumerable<Order> orderEntries = _unitOfWork.Order.GetAll(u => u.BillId == orderFromDb.BillId);
-                    Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == orderFromDb.BillId);
+                    if (orderFromDb == null || id == 0)
+                    {
+                        orderFromDb = new Order();
+                        orderFromDb.BillId = updateBillDTO.BillId;
+                    } 
+                    IEnumerable<Order> orderEntries = _unitOfWork.Order.GetAll(u => u.BillId == updateBillDTO.BillId);
+                    Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == updateBillDTO.BillId);
                     orderFromDb.StockId = updateBillDTO.StockId;
                     orderFromDb.Quantity = updateBillDTO.Quantity;
                     orderFromDb.TotalAmount = updateBillDTO.TotalAmount;
 
                     billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum();
+                    if (orderFromDb == null || id == 0) 
+                        _unitOfWork.Order.Add(orderFromDb);
+                    else 
+                        _unitOfWork.Order.Update(orderFromDb);
+                    _unitOfWork.Save();
 
-                    _unitOfWork.Order.Update(orderFromDb);
                     _unitOfWork.Bill.Update(billFromDb);
+                    _unitOfWork.Save();
 
-                    _response.Result = updateBillDTO;
+
+                    _response.Result = orderFromDb;
                     _response.StatusCode = HttpStatusCode.Created;
                 }
                 else
@@ -147,17 +179,21 @@ namespace RetailManagementSystem.Services
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return (_response);
             }
-            _unitOfWork.Save();
             return (_response);
         }
-        public ApiResponse DeleteOrderSV(int id, int userId)
+        public ApiResponse DeleteOrderSV(int id, string email)
         {
             try
             {
                 Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == id);
                 IEnumerable<Order> orderEntries = _unitOfWork.Order.GetAll(u => u.BillId == orderFromDb.BillId);
                 Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == orderFromDb.BillId);
-                var billOwnerId = userId;
+                var billOwnerId = 0;
+                if (email != null)
+                {
+                    var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                    billOwnerId = BillOwner.Id;
+                }
                 if (billFromDb.StoreId == billOwnerId)
                 {
                     billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum() - orderFromDb.TotalAmount;
@@ -180,10 +216,15 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse DeleteBillSV(int id, int userId)
+        public ApiResponse DeleteBillSV(int id, string email)
         {
             Bill billFromDb = _unitOfWork.Bill.Get(u => u.Id == id);
-            var billOwnerId = userId;
+            var billOwnerId = 0;
+            if (email != null)
+            {
+                var BillOwner = _unitOfWork.StoreUser.Get(u => u.Email == email);
+                billOwnerId = BillOwner.Id;
+            }
             if (billFromDb.StoreId == billOwnerId)
             {
                 IEnumerable<Order> orders = _unitOfWork.Order.GetAll(u => u.BillId == billFromDb.Id);

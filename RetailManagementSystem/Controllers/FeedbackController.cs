@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using RetailManagementSystem.Utility;
+using RetailManagementSystem.Services.IServices;
 
 namespace RetailManagementSystem.Controllers
 {
@@ -17,20 +18,19 @@ namespace RetailManagementSystem.Controllers
     [ApiController]
     public class FeedbackController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfServices _unitOfServices;
         private ApiResponse _response;
-        public FeedbackController(IUnitOfWork unitOfWork)
+        public FeedbackController(IUnitOfServices unitOfServices)
         {
-            _unitOfWork = unitOfWork;
+            _unitOfServices = unitOfServices;
             _response = new ApiResponse();
         }
         [HttpGet]
-        [Authorize(Roles = SD.Role_Admin)]
+        [Authorize]
         public async Task<IActionResult> GetFeedbacks()
         {
-            _response.Result = _unitOfWork.Feedback.GetAll(includeProperties: ["ApplicationUser"]);
-            _response.StatusCode = HttpStatusCode.OK;
-            return Ok(_response);
+            ApiResponse result = _unitOfServices.FeedbackService.GetFeedbacksSV();
+            return Ok(result);
         }
         [HttpPost]
         [Authorize]
@@ -39,21 +39,14 @@ namespace RetailManagementSystem.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
                 if (ModelState.IsValid)
                 {
-                    // Create Feedback Object Here
-                    Feedback feedback = new Feedback();
-                    feedback.DateSubmitted = DateTime.Now;
-                    feedback.FeedbackType = submitFeedbackDTO.FeedbackType;
-                    feedback.FeedbackContent = submitFeedbackDTO.FeedbackContent;
-                    feedback.ApplicationUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                    _unitOfWork.Feedback.Add(feedback);
-                    _response.Result = feedback;
-                    _response.StatusCode = HttpStatusCode.Created;
+                    ApiResponse result = _unitOfServices.FeedbackService.SubmitFeedbackSV(submitFeedbackDTO, userId);
+                    _response = result;
                 }
                 else
                 {
+                    _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                 }
             }
@@ -63,7 +56,6 @@ namespace RetailManagementSystem.Controllers
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
                 return BadRequest(_response);
             }
-            _unitOfWork.Save();
             return Ok(_response);
         }
     }

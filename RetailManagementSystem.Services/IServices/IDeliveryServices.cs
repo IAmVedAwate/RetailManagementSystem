@@ -12,8 +12,8 @@ namespace RetailManagementSystem.Services.IServices
     public interface IDeliveryServices
     {
         public ApiResponse GetDeliveriesSV();
-        public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, int userId);
-        public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, int userId);
+        public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, string email);
+        public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, string email);
         public ApiResponse GetReturnSV(string index);
     }
 }

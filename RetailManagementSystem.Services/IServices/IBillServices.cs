@@ -12,11 +12,11 @@ namespace RetailManagementSystem.Services.IServices
 {
     public interface IBillServices
     {
-        public ApiResponse GetBillsSV(int userId);
-        public ApiResponse GetBillSV(string index, int userId);
-        public ApiResponse CreateBillSV(BillDTO createBillDTO, int userId);
-        public ApiResponse UpdateBillSV(int id, OrderDTO updateBillDTO, int userId);
-        public ApiResponse DeleteOrderSV(int id, int userId);
-        public ApiResponse DeleteBillSV(int id, int userId);
+        public ApiResponse GetBillsSV(string email);
+        public ApiResponse GetBillSV(string index, string email);
+        public ApiResponse CreateBillSV(BillDTO createBillDTO, string email);
+        public ApiResponse UpdateBillSV(int id, OrderDTO updateBillDTO, string email);
+        public ApiResponse DeleteOrderSV(int id, string email);
+        public ApiResponse DeleteBillSV(int id, string email);
     }
 }

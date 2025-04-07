@@ -98,11 +98,16 @@ namespace RetailManagementSystem.Services
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
         }
-        public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, int userId)
+        public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, string email)
         {
             try
             {
-                var deliveryId = userId;
+                var deliveryId = 0;
+                if (email != null)
+                {
+                    var DeliveryOwner = _unitOfWork.DeliveryUser.Get(u => u.Email == email);
+                    deliveryId = DeliveryOwner.Id;
+                }
                 if (deliveryId != 0)
                 {
                     Bill billFromDb = _unitOfWork.Bill.Get(u => u.indexForBill == deliveryDTO.BillIndex);
@@ -139,12 +144,17 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
-        public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, int userId)
+        public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, string email)
         {
             try
             {
-                
-                var deliveryId = userId;
+
+                var deliveryId = 0;
+                if (email != null)
+                {
+                    var DeliveryOwner = _unitOfWork.DeliveryUser.Get(u => u.Email == email);
+                    deliveryId = DeliveryOwner.Id;
+                }
                 Order orderFromDb = _unitOfWork.Order.Get(u => u.Id == submitReturnsDTO.OrderId, includeProperties: ["Stock"]);
                 var billIdFromDb = _unitOfWork.Order.Get(u => u.Id == submitReturnsDTO.OrderId).BillId;
                 //var deliveryIdFromDb = _unitOfWork.Delivery.Get(u => u.BillId == billIdFromDb).DeliveryUserId;
