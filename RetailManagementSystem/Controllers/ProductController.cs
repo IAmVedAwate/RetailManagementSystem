@@ -37,8 +37,14 @@ namespace RetailManagementSystem.Controllers
             ApiResponse result = _unitOfServices.ProductService.GetProductByIdSV(id);
             return Ok(result);
         }
-        [HttpGet("random")]
+        [HttpGet("{subId:int}")]
         [Authorize]
+        public async Task<IActionResult> GetProductBySubCategory(int subId)
+        {
+            ApiResponse result = _unitOfServices.ProductService.GetProductBySubCategorySV(subId);
+            return Ok(result);
+        }
+        [HttpGet("random")]
         public async Task<IActionResult> GetRandomProducts()
         {
             ApiResponse result = _unitOfServices.ProductService.GetRandomProductsSV();

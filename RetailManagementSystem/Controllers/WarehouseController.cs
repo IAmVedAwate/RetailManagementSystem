@@ -47,13 +47,13 @@ namespace RetailManagementSystem.Controllers
 
         [HttpPost]
         [Authorize(Roles=SD.Role_Retailer)]
-        public async Task<IActionResult> AddStockInWarehouse([FromBody] WarehouseDTO addWarehouseDTO)
+        public async Task<IActionResult> AddStockInWarehouse([FromBody] StockDTO addStockDTO)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    ApiResponse result = _unitOfServices.WarehouseService.AddStockInWarehouseSV(addWarehouseDTO, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+                    ApiResponse result = _unitOfServices.WarehouseService.AddStockInWarehouseSV(addStockDTO, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
                     _response = result;
                 }
                 else
@@ -72,7 +72,7 @@ namespace RetailManagementSystem.Controllers
         }
         [HttpPut("{indexId:int}", Name = "EditStockInWarehouse")]
         [Authorize(Roles=SD.Role_Retailer)]
-        public async Task<IActionResult> EditStockInWarehouse(int indexId, [FromForm] StockDTO editWarehouseDTO)
+        public async Task<IActionResult> EditStockInWarehouse(int indexId, [FromBody] StockDTO editWarehouseDTO)
         {
             try
             {

@@ -3,6 +3,7 @@ using RetailManagementSystem.DataAccess.Repository.IRepository;
 using RetailManagementSystem.Models.Models;
 using RetailManagementSystem.Models.Models.Admin;
 using RetailManagementSystem.Models.Models.DTO;
+using RetailManagementSystem.Models.Models.ResultModels;
 using RetailManagementSystem.Models.Models.Store;
 using RetailManagementSystem.Services.IServices;
 using System;
@@ -77,11 +78,12 @@ namespace RetailManagementSystem.Services
 
         public ApiResponse CreateBillSV(BillDTO createBillDTO, string email)
         {
+            Bill newBill = new Bill();
             try
             {
                 
                 // Create Warehouse Object Here
-                Bill newBill = new Bill();
+                
                 var billOwnerId = 0;
                 if (email != null)
                 {
@@ -103,7 +105,6 @@ namespace RetailManagementSystem.Services
                     _response.IsSuccess = false;
                 }
 
-
                 var orderEntities = createBillDTO.orders.Select(order => new Order
                 {
                     StockId = order.StockId,
@@ -113,12 +114,22 @@ namespace RetailManagementSystem.Services
                 }).ToList();
 
                 _unitOfWork.Order.AddRange(orderEntities);
-                _response.Result = orderEntities;
+                _unitOfWork.Save();
+                _response.Result = createBillDTO.orders.Select(order => new OrdersWithIndex
+                {
+                    StockId = order.StockId,
+                    Quantity = order.Quantity,
+                    TotalAmount = order.TotalAmount,
+                    BillId = newBill.Id,
+                    BillIndex = newBill.indexForBill,
+                }).ToList(); ;
                 _response.StatusCode = HttpStatusCode.Created;
                
             }
             catch (Exception ex)
             {
+                _unitOfWork.Bill.Remove(newBill);
+                _unitOfWork.Save();
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RetailManagementSystem.DataAccess.Repository.IRepository;
 using RetailManagementSystem.Models.Models;
 using RetailManagementSystem.Models.Models.Admin;
@@ -26,8 +27,8 @@ namespace RetailManagementSystem.Services
 
         public ApiResponse GetAllWarehousesSV(int subId)
         {
-            IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.Product.SubCategoryId == subId, 
-                includeProperties: ["Product.SubCategory"]);
+            IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.Product.SubCategoryId == subId,
+                includeProperties: ["Product.SubCategory"]).OrderBy(s => s.ProductId).ToList();
             _response.Result = stocksFromDb;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
@@ -42,22 +43,12 @@ namespace RetailManagementSystem.Services
                 userId = mainWarehouseOwner?.WarehouseId ?? 0;
             }
             IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.WarehouseId == userId, includeProperties: ["Product"]);
-            _response.Result = stocksFromDb.Select(stock => new Stock
-            {
-                ProductId = stock.ProductId,
-                Product = stock.Product,
-                Quantity = stock.Quantity,
-                MarginPercentage = stock.MarginPercentage,
-                IsReturnable = stock.IsReturnable,
-                LastUpdated = stock.LastUpdated,
-                WarehouseId = stock.WarehouseId
-
-            }).ToList();
+            _response.Result = stocksFromDb;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
         }
 
-        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, string email)
+        public ApiResponse AddStockInWarehouseSV(StockDTO addStockDTO, string email)
         {
             try
             {
@@ -68,25 +59,17 @@ namespace RetailManagementSystem.Services
                     var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
                     userId = mainWarehouseOwner?.WarehouseId ?? 0;
                 }
-                var count = 1;
-                var stockEntities = addWarehouseDTO.Stocks.Select(stock =>
-                {
-                    count += 1;
-                    return new Stock
-                    {
-                        // Map properties from DTO to Entity
-                        IndexForDeletion = count,
-                        ProductId = stock.ProductId,
-                        Quantity = stock.Quantity,
-                        MarginPercentage = stock.MarginPercentage,
-                        IsReturnable = stock.IsReturnable,
-                        LastUpdated = DateTime.Now,
-                        WarehouseId = userId
-                    };
-                }).ToList();
+                Stock stockFromDb = new();
 
-                _unitOfWork.Stock.AddRange(stockEntities);
-                _response.Result = stockEntities;
+                stockFromDb.ProductId = addStockDTO.ProductId;
+                stockFromDb.Quantity = addStockDTO.Quantity;
+                stockFromDb.MarginPercentage = addStockDTO.MarginPercentage;
+                stockFromDb.IsReturnable = addStockDTO.IsReturnable;
+                stockFromDb.LastUpdated = DateTime.Now;
+                stockFromDb.WarehouseId = userId;
+
+                _unitOfWork.Stock.Add(stockFromDb);
+                _response.Result = stockFromDb;
                 _response.StatusCode = HttpStatusCode.Created;
                 
             }
@@ -110,7 +93,7 @@ namespace RetailManagementSystem.Services
                     var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
                     userId = mainWarehouseOwner?.WarehouseId ?? 0;
                 }
-                Stock stockFromDb = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.IndexForDeletion == indexId);
+                Stock stockFromDb = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.Id == indexId);
 
                 stockFromDb.ProductId = editWarehouseDTO.ProductId;
                 stockFromDb.Quantity = editWarehouseDTO.Quantity;
@@ -142,7 +125,7 @@ namespace RetailManagementSystem.Services
                 var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
                 userId = mainWarehouseOwner?.WarehouseId ?? 0;
             }
-            Stock stockForDeletion = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.IndexForDeletion == indexId);
+            Stock stockForDeletion = _unitOfWork.Stock.Get(u => u.WarehouseId == userId && u.Id == indexId);
             _unitOfWork.Stock.Remove(stockForDeletion);
             _unitOfWork.Save();
             _response.Result = stockForDeletion;

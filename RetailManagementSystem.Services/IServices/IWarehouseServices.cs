@@ -14,7 +14,7 @@ namespace RetailManagementSystem.Services.IServices
     {
         public ApiResponse GetAllWarehousesSV(int subId);
         public ApiResponse GetWarehouseSV(string email);
-        public ApiResponse AddStockInWarehouseSV(WarehouseDTO addWarehouseDTO, string email);
+        public ApiResponse AddStockInWarehouseSV(StockDTO addStockDTO, string email);
         public ApiResponse EditStockInWarehouseSV(int indexId, StockDTO editWarehouseDTO, string email);
         public ApiResponse RemoveStockSV(int indexId, string email);
     }

@@ -55,6 +55,22 @@ namespace RetailManagementSystem.Services
             }
         }
 
+        public ApiResponse GetProductBySubCategorySV(int subId)
+        {
+            try
+            {
+                _response.Result = _unitOfWork.Product.GetAll(u => u.SubCategoryId == subId, includeProperties: ["SubCategory"]);
+                _response.StatusCode = HttpStatusCode.OK;
+                return (_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return (_response);
+            }
+        }
+
         public ApiResponse GetRandomProductsSV()
         {
             try
