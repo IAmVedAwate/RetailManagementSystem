@@ -13,6 +13,8 @@ namespace RetailManagementSystem.Services.IServices
     {
         public ApiResponse GetDeliveriesSV();
         public ApiResponse CreateDeliverySV(DeliveryDTO deliveryDTO, string email);
+        public ApiResponse AssignedDeliveryByIdSV(int id, string email);
+        public ApiResponse AssignDeliveryToUserSV(int id, string email);
         public ApiResponse SubmitReturnsSV(ReturnDTO submitReturnsDTO, string email);
         public ApiResponse GetReturnSV(string index);
     }

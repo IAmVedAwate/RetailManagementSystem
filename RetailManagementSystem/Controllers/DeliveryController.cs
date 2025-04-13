@@ -15,6 +15,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Authorization;
 using RetailManagementSystem.Utility;
 using RetailManagementSystem.Services.IServices;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace RetailManagementSystem.Controllers
 {
@@ -39,8 +40,8 @@ namespace RetailManagementSystem.Controllers
             return Ok(result);
         }
         [HttpPost]
-        [Authorize(Roles=SD.Role_Delivery)]
-        public async Task<IActionResult> CreateDelivery([FromForm] DeliveryDTO deliveryDTO)
+        [Authorize(Roles=SD.Role_Store)]
+        public async Task<IActionResult> CreateDelivery([FromBody] DeliveryDTO deliveryDTO)
         {
             try
             {
@@ -63,7 +64,19 @@ namespace RetailManagementSystem.Controllers
             }
             return Ok(_response);
         }
-
+        [HttpPost("{id:int}")]
+        [Authorize(Roles = SD.Role_Delivery)]
+        public async Task<IActionResult> AssignDeliveryToUser(int id){
+            ApiResponse result = _unitOfServices.DeliveryService.AssignDeliveryToUserSV(id, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
+        }
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = SD.Role_Delivery)]
+        public async Task<IActionResult> AssignedDeliveryById(int id)
+        {
+            ApiResponse result = _unitOfServices.DeliveryService.AssignedDeliveryByIdSV(id, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
+        }
         [HttpGet("Returns")]
         [Authorize(Roles=SD.Role_Delivery)]
         public async Task<IActionResult> GetReturn([FromQuery]string index)

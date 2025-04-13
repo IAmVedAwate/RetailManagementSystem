@@ -13,7 +13,7 @@ namespace RetailManagementSystem.Models.Models.DTO
     public class DeliveryDTO
     {
         public string BillIndex { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = "Pending";
         public DateTime DeliveryDate { get; set; }
         public string Instructions { get; set; }
         public string Phone2 { get; set; }

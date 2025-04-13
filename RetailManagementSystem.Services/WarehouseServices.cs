@@ -28,7 +28,7 @@ namespace RetailManagementSystem.Services
         public ApiResponse GetAllWarehousesSV(int subId)
         {
             IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.Product.SubCategoryId == subId,
-                includeProperties: ["Product.SubCategory"]).OrderBy(s => s.ProductId).ToList();
+                includeProperties: ["Product.SubCategory","Warehouse"]).OrderBy(s => s.ProductId).ToList();
             _response.Result = stocksFromDb;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);

@@ -12,8 +12,8 @@ using RetailManagementSystem.DataAccess.Data;
 namespace RetailManagementSystem.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250404130808_RepairedAllMistakes")]
-    partial class RepairedAllMistakes
+    [Migration("20250411042732_WarehouseTableUpdateWithName")]
+    partial class WarehouseTableUpdateWithName
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -349,9 +349,6 @@ namespace RetailManagementSystem.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
@@ -374,15 +371,15 @@ namespace RetailManagementSystem.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("QuantityInBox")
+                    b.Property<int>("RetailPrice")
                         .HasColumnType("int");
 
-                    b.Property<int>("RetailPrice")
+                    b.Property<int>("SubCategoryId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("SubCategoryId");
 
                     b.ToTable("Products");
                 });
@@ -622,6 +619,9 @@ namespace RetailManagementSystem.DataAccess.Migrations
                     b.Property<int>("ProductsCounts")
                         .HasColumnType("int");
 
+                    b.Property<string>("WarehouseName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Warehouses");
@@ -818,13 +818,13 @@ namespace RetailManagementSystem.DataAccess.Migrations
 
             modelBuilder.Entity("RetailManagementSystem.Models.Models.Admin.Product", b =>
                 {
-                    b.HasOne("RetailManagementSystem.Models.Models.Admin.Category", "Category")
+                    b.HasOne("RetailManagementSystem.Models.Models.Admin.SubCategory", "SubCategory")
                         .WithMany()
-                        .HasForeignKey("CategoryId")
+                        .HasForeignKey("SubCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
+                    b.Navigation("SubCategory");
                 });
 
             modelBuilder.Entity("RetailManagementSystem.Models.Models.Admin.SubCategory", b =>

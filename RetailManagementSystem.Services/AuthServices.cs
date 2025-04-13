@@ -126,6 +126,7 @@ namespace RetailManagementSystem.Services
                     {
                         case SD.Role_Retailer:
                             Warehouse warehouse = new Warehouse();
+                            warehouse.WarehouseName = model.RetailName;
                             _unitOfWork.Warehouse.Add(warehouse);
                             _unitOfWork.Save();
                             RetailerUser newRetailerUser = new RetailerUser
@@ -145,14 +146,15 @@ namespace RetailManagementSystem.Services
                         case SD.Role_Delivery:
                             DeliveryUser newDeliveryUser = new DeliveryUser
                             {
-                                DeliveryUserName = model.DeliveryUserName,
+                                DeliveryUserName = model.Name,
                                 Email = model.Username,
                                 Adhar = model.Adhar,
-                                ProfilePhoto = model.ProfilePhoto,
+                                ProfilePhoto = "model.ProfilePhoto",
                                 Phone = model.Phone,
                                 Address = model.Address  // Delivery-specific field
                             };
                             _unitOfWork.DeliveryUser.Add(newDeliveryUser);
+                            _unitOfWork.Save();
                             break;
 
                         case SD.Role_Store:

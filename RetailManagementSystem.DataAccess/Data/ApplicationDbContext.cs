@@ -35,6 +35,7 @@ namespace RetailManagementSystem.DataAccess.Data
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Bill> Bills { get; set; } 
         public DbSet<Order> Orders { get; set; } 
+        public DbSet<OrderAssign> OrderAssigned { get; set; }
         public DbSet<StoreUser> StoreUsers { get; set; }
     }
 }

@@ -18,7 +18,7 @@ namespace RetailManagementSystem.Models.Models.Delivery
         [ForeignKey(nameof(BillId))]
         [ValidateNever]
         public Bill Bill { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = "Pending";
         public DateTime DeliveryDate { get; set; }
         public string Instructions { get; set; }
         public string Phone2 { get; set; }

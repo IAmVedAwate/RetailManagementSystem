@@ -15,5 +15,6 @@ namespace RetailManagementSystem.Models.Models.Retailer
         [Key]
         public int Id { get; set; }
         public int ProductsCounts { get; set; } = 0;
+        public string WarehouseName { get; set; }
     }
 }

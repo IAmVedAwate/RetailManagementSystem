@@ -28,6 +28,7 @@ namespace RetailManagementSystem.DataAccess.Repository
         public IStockRepository Stock { get; private set; }
         public IWarehouseRepository Warehouse { get; private set; }
         public IDeliveryUserRepository DeliveryUser { get; private set; }
+        public IOrderAssignRepository OrderAssign { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -41,6 +42,7 @@ namespace RetailManagementSystem.DataAccess.Repository
             Product = new ProductRepository(_db);
             Delivery = new DeliveryRepository(_db);
             DeliveryUser = new DeliveryUserRepository(_db);
+            OrderAssign = new OrderAssignRepository(_db);
             Return = new ReturnRepository(_db);
             RetailerUser = new RetailerRepository(_db);
             Stock = new StockRepository(_db);

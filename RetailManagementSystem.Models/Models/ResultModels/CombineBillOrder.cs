@@ -10,6 +10,10 @@ namespace RetailManagementSystem.Models.Models.ResultModels
 {
     public class DeliveryDetailedResult
     {
+        public int DeliveryId { get; set; }
+        public string Instructions { get; set; }
+        public string GoogleMapLocation { get; set; }
+        public string Status { get; set; } = "Pending";
         public StoreData storeData { get; set; }
         public List<OrderFromBill> OrdersFromBill { get; set; }
     }

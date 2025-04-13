@@ -59,7 +59,7 @@ namespace RetailManagementSystem.Services
                 Bill bill = _unitOfWork.Bill.Get(u => u.StoreId == billOwnerId && u.indexForBill == index, includeProperties: ["StoreUser"]);
                 if (bill != null)
                 {
-                    _response.Result = _unitOfWork.Order.GetAll(u => u.BillId == bill.Id, includeProperties: ["Bill","Stock.Product.SubCategory"]);
+                    _response.Result = _unitOfWork.Order.GetAll(u => u.BillId == bill.Id, includeProperties: ["Bill","Stock.Product.SubCategory", "Stock.Warehouse"]);
                     _response.StatusCode = HttpStatusCode.OK;
                 }
                 else
