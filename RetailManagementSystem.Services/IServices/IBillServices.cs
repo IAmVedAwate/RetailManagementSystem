@@ -14,6 +14,8 @@ namespace RetailManagementSystem.Services.IServices
     {
         public ApiResponse GetBillsSV(string email);
         public ApiResponse GetBillSV(string index, string email);
+        public ApiResponse GetReturnableSV();
+        public ApiResponse GetOrderForReturnSV(int orderId);
         public ApiResponse CreateBillSV(BillDTO createBillDTO, string email);
         public ApiResponse UpdateBillSV(int id, OrderDTO updateBillDTO, string email);
         public ApiResponse DeleteOrderSV(int id, string email);

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RetailManagementSystem.DataAccess.Data;
 
@@ -11,9 +12,11 @@ using RetailManagementSystem.DataAccess.Data;
 namespace RetailManagementSystem.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250516152212_AddingOrderPlacedDate2")]
+    partial class AddingOrderPlacedDate2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -548,32 +551,6 @@ namespace RetailManagementSystem.DataAccess.Migrations
                     b.ToTable("Returns");
                 });
 
-            modelBuilder.Entity("RetailManagementSystem.Models.Models.Retailer.RetailMessages", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("WarehouseId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WarehouseId");
-
-                    b.ToTable("RetailMessages");
-                });
-
             modelBuilder.Entity("RetailManagementSystem.Models.Models.Retailer.RetailerUser", b =>
                 {
                     b.Property<int>("Id")
@@ -934,17 +911,6 @@ namespace RetailManagementSystem.DataAccess.Migrations
                     b.Navigation("DeliveryUser");
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("RetailManagementSystem.Models.Models.Retailer.RetailMessages", b =>
-                {
-                    b.HasOne("RetailManagementSystem.Models.Models.Retailer.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("RetailManagementSystem.Models.Models.Retailer.RetailerUser", b =>

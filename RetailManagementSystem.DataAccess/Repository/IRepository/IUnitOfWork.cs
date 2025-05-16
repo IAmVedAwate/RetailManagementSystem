@@ -25,6 +25,7 @@ namespace RetailManagementSystem.DataAccess.Repository.IRepository
         public IWarehouseRepository Warehouse { get; }
         public IDeliveryUserRepository DeliveryUser { get; }
         public IOrderAssignRepository OrderAssign { get; }
+        public IRetailMessagesRepository RetailMessages { get; }
         void Save();
     }
 }

@@ -26,78 +26,121 @@ namespace RetailManagementSystem.Services
             _unitOfWork = unitOfWork;
             _response = new ApiResponse();
         }
-        public ApiResponse GetDeliveriesSV()
+        // 1. Private helper to map a Delivery + Orders → DeliveryDetailedResult
+        private DeliveryDetailedResult BuildDeliveryDetail(Delivery delivery, IEnumerable<Order> allOrders)
         {
-            IEnumerable<Delivery> AllDeliveries = _unitOfWork.Delivery.GetAll(includeProperties: ["Bill.StoreUser"]);
-            IEnumerable<Order> AllOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.SubCategory", "Stock.Warehouse", "Bill"]);
-            List<DeliveryDetailedResult> CombinedResult = AllDeliveries.Select(delivery =>
-            {
-                List<OrderFromBill> OrdersFromBill = AllOrders.Where(order => order.BillId == delivery.BillId).Select(order =>
+            // build the orders list for this delivery’s bill
+            var ordersFromBill = allOrders
+                .Where(o => o.BillId == delivery.BillId)
+                .Select(order =>
                 {
-                    ProductData product = new ProductData()
+                    var p = order.Stock.Product;
+                    var product = new ProductData
                     {
-                        ProductName = order.Stock.Product.ProductName,
-                        ProductDescription = order.Stock.Product.ProductDescription,
-                        RetailPrice = order.Stock.Product.RetailPrice,
-                        MRP = order.Stock.Product.MRP,
-                        Category = order.Stock.Product.SubCategory.SubCategoryName
+                        ProductName = p.ProductName,
+                        ProductDescription = p.ProductDescription,
+                        RetailPrice = p.RetailPrice,
+                        MRP = p.MRP,
+                        Category = p.SubCategory.SubCategoryName
                     };
 
-                    StockData stockData = new StockData()
+                    var stock = order.Stock;
+                    var stockData = new StockData
                     {
-                        Index = order.Stock.IndexForDeletion,
+                        Index = stock.IndexForDeletion,
                         Product = product,
-                        Quantity = order.Stock.Quantity,
-                        MarginPercentage = order.Stock.MarginPercentage,
-                        IsReturnable = order.Stock.IsReturnable,
+                        Quantity = stock.Quantity,
+                        MarginPercentage = stock.MarginPercentage,
+                        IsReturnable = stock.IsReturnable,
                     };
-                    RetailerUser retailer = _unitOfWork.RetailerUser.Get(u => u.WarehouseId == order.Stock.WarehouseId);
-                    RetailerData Retailer = new RetailerData()
+
+                    var retailerUser = _unitOfWork.RetailerUser
+                        .Get(r => r.WarehouseId == stock.WarehouseId);
+                    var retailer = new RetailerData
                     {
-                        RetailName = retailer.RetailName,
-                        OwnerName = retailer.OwnerName,
-                        Phone = retailer.Phone,
-                        Address = retailer.Address,
+                        RetailName = retailerUser.RetailName,
+                        OwnerName = retailerUser.OwnerName,
+                        Phone = retailerUser.Phone,
+                        Address = retailerUser.Address,
                     };
-                    OrderFromBill orderFromBill = new OrderFromBill()
+
+                    return new OrderFromBill
                     {
                         Stock = stockData,
                         Quantity = order.Quantity,
                         TotalAmount = order.TotalAmount,
-                        Retailer = Retailer
+                        Retailer = retailer
                     };
-                    return orderFromBill;
-                }).ToList();
+                })
+                .ToList();
 
-                StoreData store = new StoreData()
-                {
-                    IndexForBill = delivery.Bill.indexForBill,
-                    StoreName = delivery.Bill.StoreUser.StoreName,
-                    PhotoOfStore = delivery.Bill.StoreUser.PhotoOfStore,
-                    ProfilePhoto = delivery.Bill.StoreUser.ProfilePhoto,
-                    Phone = delivery.Bill.StoreUser.Phone,
-                    Address = delivery.Bill.StoreUser.Address
-                };
+            // build the store info
+            var storeUser = delivery.Bill.StoreUser;
+            var storeData = new StoreData
+            {
+                IndexForBill = delivery.Bill.indexForBill,
+                StoreName = storeUser.StoreName,
+                PhotoOfStore = storeUser.PhotoOfStore,
+                ProfilePhoto = storeUser.ProfilePhoto,
+                Phone = storeUser.Phone,
+                Address = storeUser.Address
+            };
 
+            // assemble the result
+            return new DeliveryDetailedResult
+            {
+                DeliveryId = delivery.Id,
+                Status = delivery.Status,
+                Instructions = delivery.Instructions,
+                GoogleMapLocation = delivery.GoogleMapLocation,
+                storeData = storeData,
+                OrdersFromBill = ordersFromBill
+            };
+        }
+        public ApiResponse GetDeliveriesSV()
+        {
+            // grab all deliveries and orders once
+            IEnumerable<Delivery> allDeliveries = _unitOfWork.Delivery
+                .GetAll(includeProperties: [ "Bill.StoreUser" ]);
+            IEnumerable<Order> allOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.SubCategory","Stock.Warehouse","Bill"]);
 
-                return new DeliveryDetailedResult
-                {
-                    DeliveryId = delivery.Id,
-                    Status = delivery.Status,
-                    Instructions = delivery.Instructions,
-                    GoogleMapLocation = delivery.GoogleMapLocation,
-                    storeData = store,
-                    OrdersFromBill = OrdersFromBill
-                };
-            }).ToList();
-            _response.Result = CombinedResult;
+            List<DeliveryDetailedResult> combined = allDeliveries
+                .Where(d => d.Status == "Pending")
+                .Select(d => BuildDeliveryDetail(d, allOrders))
+                .ToList();
+
+            _response.Result = combined;
             _response.StatusCode = HttpStatusCode.OK;
-            return (_response);
+            return _response;
+        }
+        public ApiResponse GetAcceptedDeliveriesSV(string email)
+        {
+            if (!string.IsNullOrEmpty(email))
+            {
+                var user = _unitOfWork.DeliveryUser.Get(u => u.Email == email);
+            }
+            // grab all deliveries and orders once
+            IEnumerable<OrderAssign> allDeliveries = _unitOfWork.OrderAssign
+                .GetAll(includeProperties: ["Delivery.Bill.StoreUser"]);
+            IEnumerable<Order> allOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.SubCategory", "Stock.Warehouse", "Bill"]);
+
+            List<DeliveryDetailedResult> combined = allDeliveries
+                .Select(d => BuildDeliveryDetail(d.Delivery, allOrders))
+                .ToList();
+
+            _response.Result = combined;
+            _response.StatusCode = HttpStatusCode.OK;
+            return _response;
         }
 
-        public ApiResponse GetReturnSV(string index)
+        public ApiResponse GetReturnSV(string email)
         {
-            Return returnObj = _unitOfWork.Return.Get(u => u.indexForReturn.ToString() == index);
+            int userId = 0;
+            if (!string.IsNullOrEmpty(email))
+            {
+                userId = _unitOfWork.RetailerUser.Get(u => u.Email == email).WarehouseId;
+            }
+            IEnumerable<Return> returnObj = _unitOfWork.Return.GetAll(u=> u.Order.Stock.WarehouseId == userId,includeProperties: ["Order.Stock.Warehouse"]);
             _response.Result = returnObj;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
@@ -125,6 +168,7 @@ namespace RetailManagementSystem.Services
                     Instructions = deliveryDTO.Instructions,
                     Phone2 = deliveryDTO.Phone2,
                     GoogleMapLocation = deliveryDTO.GoogleMapLocation,
+                    OrderPlacedDate = DateTime.Now
                 };
 
                 _unitOfWork.Delivery.Add(delivery);
@@ -136,25 +180,61 @@ namespace RetailManagementSystem.Services
                 foreach (var order in orders)
                 {
                     // Get the corresponding Stock using the Order's StockId.
-                    Stock stock = _unitOfWork.Stock.Get(s => s.Id == order.StockId);
+                    Stock stock = _unitOfWork.Stock.Get(s => s.Id == order.StockId, includeProperties: ["Product.SubCategory.Category"]);
                     if (stock != null)
                     {
-                        // Optionally add validation if stock.Quantity is insufficient.
-                        if (stock.Quantity >= order.Quantity)
+                        stock.Quantity -= order.Quantity;
+                        // If order quantity is greater than stock, update order quantity to match stock
+                        if (order.Quantity > stock.Quantity)
                         {
-                            stock.Quantity -= order.Quantity;
+                            order.Quantity = stock.Quantity;
+                            _unitOfWork.Order.Update(order);
+                            _unitOfWork.Save();
+                        }
+
+                        if (stock.Quantity <= 10 && stock.Quantity > 0)
+                        {
+                            _unitOfWork.RetailMessages.Add(new RetailMessages()
+                            {
+                                Message = $"Stock is Lower Than 10 for {stock.Product.ProductName} ( Category: {stock.Product.SubCategory.Category.CategoryName}, Subcategory: {stock.Product.SubCategory.SubCategoryName} ) ",
+                                WarehouseId = stock.WarehouseId,
+                                Type = "W",
+                            });
+                            _unitOfWork.Save();
+                        }
+
+                        if (stock.Quantity <= 0)
+                        {
+                            // Delete the order and stock if quantity reaches zero
+                            _unitOfWork.Order.Remove(order);
+                            _unitOfWork.Stock.Remove(stock);
+                            // Check if this was the last order for the bill
+                            int remainingOrders = _unitOfWork.Order.GetAll(o => o.BillId == order.BillId && o.Id != order.Id).Count();
+                            if (remainingOrders == 0)
+                            {
+                                var bill = _unitOfWork.Bill.Get(b => b.Id == order.BillId);
+                                if (bill != null)
+                                {
+                                    _unitOfWork.Bill.Remove(bill);
+                                }
+                            }
+                            _unitOfWork.RetailMessages.Add(new RetailMessages()
+                            {
+                                Message = $"Stock is Empty for {stock.Product.ProductName} ( Category: {stock.Product.SubCategory.Category.CategoryName}, Subcategory: {stock.Product.SubCategory.SubCategoryName} ) ",
+                                WarehouseId = stock.WarehouseId,
+                                Type = "R",
+                            });
+                            _unitOfWork.Save();
+                            continue; // Skip update since it's deleted
                         }
                         else
                         {
-                            // Optionally: handle insufficient stock situation.
-                            order.Quantity = stock.Quantity;
-                            stock.Quantity = 0; // or throw an exception or add a warning message.
-                            _unitOfWork.Order.Update(order);
+                            _unitOfWork.Stock.Update(stock);
+                            _unitOfWork.Save();
                         }
-                        _unitOfWork.Stock.Update(stock);
-                        
                     }
                 }
+
 
                 // Set the response properties.
                 _response.Result = delivery;
@@ -172,7 +252,7 @@ namespace RetailManagementSystem.Services
                 return _response;
             }
         }
-        public ApiResponse AssignedDeliveryByIdSV(int id, string email)
+        public ApiResponse CompleteDeliverySV(int id, string email)
         {
             var deliveryUserId = 0;
             if (email != null)
@@ -180,67 +260,49 @@ namespace RetailManagementSystem.Services
                 var DeliveryOwner = _unitOfWork.DeliveryUser.Get(u => u.Email == email);
                 deliveryUserId = DeliveryOwner.Id;
             }
-            OrderAssign oneDelivery = _unitOfWork.OrderAssign.Get(u=>u.DeliveryId == id && u.DeliveryUserId == deliveryUserId,includeProperties: ["Delivery.Bill.StoreUser"]);
-            IEnumerable<Order> AllOrders = _unitOfWork.Order.GetAll(includeProperties: ["Stock.Product.SubCategory", "Stock.Warehouse", "Bill"]);
-            List<OrderFromBill> OrdersFromBill = AllOrders.Where(order => order.BillId == oneDelivery.Delivery.BillId).Select(order =>
+            try
             {
-                ProductData product = new ProductData()
+                Delivery delivery = _unitOfWork.Delivery.Get(u => u.Id == id);
+                if (delivery != null)
                 {
-                    ProductName = order.Stock.Product.ProductName,
-                    ProductDescription = order.Stock.Product.ProductDescription,
-                    RetailPrice = order.Stock.Product.RetailPrice,
-                    MRP = order.Stock.Product.MRP,
-                    Category = order.Stock.Product.SubCategory.SubCategoryName
-                };
-
-                StockData stockData = new StockData()
+                    delivery.Status = "Completed";
+                    delivery.DeliveryDate = DateTime.Now;
+                    _unitOfWork.Delivery.Update(delivery);
+                    _unitOfWork.Save();
+                    _response.IsSuccess = true;
+                    _response.StatusCode = HttpStatusCode.OK;
+                }
+                else
                 {
-                    Index = order.Stock.IndexForDeletion,
-                    Product = product,
-                    Quantity = order.Stock.Quantity,
-                    MarginPercentage = order.Stock.MarginPercentage,
-                    IsReturnable = order.Stock.IsReturnable,
-                };
-                RetailerUser retailer = _unitOfWork.RetailerUser.Get(u => u.WarehouseId == order.Stock.WarehouseId);
-                RetailerData Retailer = new RetailerData()
-                {
-                    RetailName = retailer.RetailName,
-                    OwnerName = retailer.OwnerName,
-                    Phone = retailer.Phone,
-                    Address = retailer.Address,
-                };
-                OrderFromBill orderFromBill = new OrderFromBill()
-                {
-                    Stock = stockData,
-                    Quantity = order.Quantity,
-                    TotalAmount = order.TotalAmount,
-                    Retailer = Retailer
-                };
-                return orderFromBill;
-            }).ToList();
-
-            StoreData store = new StoreData()
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.ErrorMessages = new List<string>() { "Delivery not found." };
+                }
+            }
+            catch (Exception ex)
             {
-                IndexForBill = oneDelivery.Delivery.Bill.indexForBill,
-                StoreName = oneDelivery.Delivery.Bill.StoreUser.StoreName,
-                PhotoOfStore = oneDelivery.Delivery.Bill.StoreUser.PhotoOfStore,
-                ProfilePhoto = oneDelivery.Delivery.Bill.StoreUser.ProfilePhoto,
-                Phone = oneDelivery.Delivery.Bill.StoreUser.Phone,
-                Address = oneDelivery.Delivery.Bill.StoreUser.Address
-            };
-            DeliveryDetailedResult CombinedResult = new();
-
-            CombinedResult.DeliveryId = oneDelivery.Delivery.Id;
-            CombinedResult.Status = oneDelivery.Delivery.Status;
-            CombinedResult.Instructions = oneDelivery.Delivery.Instructions;
-            CombinedResult.GoogleMapLocation = oneDelivery.Delivery.GoogleMapLocation;
-            CombinedResult.storeData = store;
-            CombinedResult.OrdersFromBill = OrdersFromBill;
-                
-            
-            _response.Result = CombinedResult;
-            _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
             return (_response);
+        }
+        public ApiResponse AssignedDeliveryByIdSV(int id, string email)
+        {
+            int userId = 0;
+            if (!string.IsNullOrEmpty(email))
+            {
+                userId = _unitOfWork.DeliveryUser.Get(u => u.Email == email).Id;
+            }
+
+            OrderAssign delivery = _unitOfWork.OrderAssign.Get(d => d.DeliveryId == id && d.DeliveryUserId == userId, includeProperties: [ "Delivery.Bill.StoreUser" ]);
+            IEnumerable<Order> allOrders = _unitOfWork.Order.GetAll(includeProperties:["Stock.Product.SubCategory","Stock.Warehouse","Bill"]);
+
+            DeliveryDetailedResult result = BuildDeliveryDetail(delivery.Delivery, allOrders);
+
+            _response.Result = result;
+            _response.StatusCode = HttpStatusCode.OK;
+            return _response;
         }
 
         public ApiResponse AssignDeliveryToUserSV(int id, string email)
@@ -308,12 +370,12 @@ namespace RetailManagementSystem.Services
                             indexForReturn = Guid.NewGuid(),
                             DeliveryUserId = deliveryUserId,
                             ReturnReason = submitReturnsDTO.ReturnReason,
-                            ReturnStatus = submitReturnsDTO.ReturnStatus,
+                            ReturnStatus = "Pending",
                             ApprovalDate = DateTime.Now,
                             RefundAmmount = orderFromDb.TotalAmount,
                             Comments = submitReturnsDTO.Comments,
                             ReturnMethod = submitReturnsDTO.ReturnMethod,
-                            PhotoEvidence = submitReturnsDTO.PhotoEvidence
+                            PhotoEvidence = "submitReturnsDTO.PhotoEvidence"
 
                         };
                         _unitOfWork.Return.Add(returns);
@@ -346,6 +408,19 @@ namespace RetailManagementSystem.Services
             }
             _unitOfWork.Save();
             return (_response);
+        }
+
+        public ApiResponse RefundAmmountProvideSV(string email)
+        {
+            var deliveryUserId = 0;
+            if (email != null)
+            {
+                var DeliveryOwner = _unitOfWork.DeliveryUser.Get(u => u.Email == email);
+                deliveryUserId = DeliveryOwner.Id;
+            }
+            OrderAssign dbDelivery = _unitOfWork.OrderAssign.Get(u => u.DeliveryUserId == deliveryUserId);
+            _response.Result = dbDelivery;
+            return _response;
         }
     }
 }

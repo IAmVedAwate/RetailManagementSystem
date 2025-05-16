@@ -23,5 +23,6 @@ namespace RetailManagementSystem.Models.Models.Delivery
         public string Instructions { get; set; }
         public string Phone2 { get; set; }
         public string GoogleMapLocation { get; set; }
+        public DateTime OrderPlacedDate { get; set; } = DateTime.Now;
     }
 }

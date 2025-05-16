@@ -45,6 +45,14 @@ namespace RetailManagementSystem.Controllers
             return Ok(result);
         }
 
+        [HttpGet("Msgs")]
+        [Authorize(Roles = SD.Role_Retailer)]
+        public async Task<IActionResult> GetMessages()
+        {
+            ApiResponse result = _unitOfServices.WarehouseService.GetMessagesSV(Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
+        }
+
         [HttpPost]
         [Authorize(Roles=SD.Role_Retailer)]
         public async Task<IActionResult> AddStockInWarehouse([FromBody] StockDTO addStockDTO)
@@ -119,6 +127,14 @@ namespace RetailManagementSystem.Controllers
                 return BadRequest(_response);
             }
             return Ok(_response);
+        }
+
+        [HttpGet("Order/History")]
+        //[Authorize(Roles = SD.Role_Retailer)]
+        public async Task<IActionResult> CopyGetBillCopyForRetailer()
+        {
+            ApiResponse result = _unitOfServices.WarehouseService.GetBillCopyForRetailerSV(Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
         }
     }
 }

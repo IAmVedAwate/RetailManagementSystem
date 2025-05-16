@@ -40,7 +40,25 @@ namespace RetailManagementSystem.Controllers
             ApiResponse result = _unitOfServices.BillService.GetBillSV(index,Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
             return Ok(result);
         }
-
+        [HttpGet("Order/Returns")]
+        public async Task<IActionResult> GetBillForReturns([FromQuery] string index, [FromQuery] string email)
+        {
+            ApiResponse result = _unitOfServices.BillService.GetBillSV(index, email);
+            return Ok(result);
+        }
+        [HttpGet("Order/Return/{orderId:int}")]
+        public async Task<IActionResult> GetOrderForReturn(int orderId)
+        {
+            ApiResponse result = _unitOfServices.BillService.GetOrderForReturnSV(orderId);
+            return Ok(result);
+        }
+        [HttpGet("Returnable")]
+        [Authorize]
+        public async Task<IActionResult> GetReturnable()
+        {
+            ApiResponse result = _unitOfServices.BillService.GetReturnableSV();
+            return Ok(result);
+        }
         [HttpPost]
         [Authorize(Roles=SD.Role_Store)]
         public async Task<IActionResult> CreateBill([FromBody] BillDTO createBillDTO)

@@ -33,10 +33,17 @@ namespace RetailManagementSystem.Controllers
         
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles =SD.Role_Delivery)]
         public async Task<IActionResult> GetDeliveries()
         {
             ApiResponse result = _unitOfServices.DeliveryService.GetDeliveriesSV();
+            return Ok(result);
+        }
+        [HttpGet("Accepted")]
+        [Authorize(Roles = SD.Role_Delivery)]
+        public async Task<IActionResult> GetAcceptedDeliveries()
+        {
+            ApiResponse result = _unitOfServices.DeliveryService.GetAcceptedDeliveriesSV(Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
             return Ok(result);
         }
         [HttpPost]
@@ -64,6 +71,13 @@ namespace RetailManagementSystem.Controllers
             }
             return Ok(_response);
         }
+        [HttpPatch("Complete/{id:int}")]
+        [Authorize(Roles = SD.Role_Delivery)]
+        public async Task<IActionResult> CompleteDelivery(int id)
+        {
+            ApiResponse result = _unitOfServices.DeliveryService.CompleteDeliverySV(id, Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
+            return Ok(result);
+        }
         [HttpPost("{id:int}")]
         [Authorize(Roles = SD.Role_Delivery)]
         public async Task<IActionResult> AssignDeliveryToUser(int id){
@@ -78,10 +92,10 @@ namespace RetailManagementSystem.Controllers
             return Ok(result);
         }
         [HttpGet("Returns")]
-        [Authorize(Roles=SD.Role_Delivery)]
-        public async Task<IActionResult> GetReturn([FromQuery]string index)
+        [Authorize(Roles=SD.Role_Retailer)]
+        public async Task<IActionResult> GetReturn()
         {
-            ApiResponse result = _unitOfServices.DeliveryService.GetReturnSV(index);
+            ApiResponse result = _unitOfServices.DeliveryService.GetReturnSV(Convert.ToString(User.FindFirstValue(ClaimTypes.Email)));
             return Ok(result);
         }
 

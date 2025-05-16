@@ -46,6 +46,43 @@ namespace RetailManagementSystem.Services
             return (_response);
         }
 
+        public ApiResponse GetReturnableSV()
+        {
+            // Fetch all bills with their related StoreUser
+            var bills = _unitOfWork.Bill.GetAll(includeProperties: ["StoreUser"]);
+
+            // Project to the required fields
+            var result = bills.Select(b => new
+            {
+                billId = b.indexForBill,
+                billName = b.billName,
+                email = b.StoreUser?.Email,
+                storeName = b.StoreUser?.StoreName
+            }).ToList();
+
+            _response.Result = result;
+            _response.StatusCode = System.Net.HttpStatusCode.OK;
+            return _response;
+        }
+
+        public ApiResponse GetOrderForReturnSV(int orderId)
+        {
+            var order = _unitOfWork.Order.Get(u => u.Id == orderId);
+            if (order != null)
+            {
+                _response.Result = order;
+                _response.StatusCode = HttpStatusCode.OK;
+            }
+            else
+            {
+                _response.Result = null;
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { "Order not found." };
+            }
+            return _response;
+        }
+
         public ApiResponse GetBillSV(string index, string email)
         {
             var billOwnerId = 0;
@@ -207,13 +244,24 @@ namespace RetailManagementSystem.Services
                 }
                 if (billFromDb.StoreId == billOwnerId)
                 {
-                    billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum() - orderFromDb.TotalAmount;
-
+                    int orderCount = orderEntries.Count();
                     _unitOfWork.Order.Remove(orderFromDb);
-                    _unitOfWork.Bill.Update(billFromDb);
 
-                    _unitOfWork.Save();
-                    _response.Result = "Deleted Successfully !! ";
+                    if (orderCount == 1)
+                    {
+                        // This was the last order, so remove the bill as well
+                        _unitOfWork.Bill.Remove(billFromDb);
+                        _unitOfWork.Save();
+                        _response.Result = "Order and Bill deleted successfully!";
+                    }
+                    else
+                    {
+                        // There are still other orders, just update the bill
+                        billFromDb.TotalAmount = (float)orderEntries.Select(order => order.TotalAmount).Sum() - orderFromDb.TotalAmount;
+                        _unitOfWork.Bill.Update(billFromDb);
+                        _unitOfWork.Save();
+                        _response.Result = "Order deleted successfully!";
+                    }
                     _response.StatusCode = HttpStatusCode.OK;
                 }
             }

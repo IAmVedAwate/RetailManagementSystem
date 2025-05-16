@@ -29,6 +29,7 @@ namespace RetailManagementSystem.DataAccess.Repository
         public IWarehouseRepository Warehouse { get; private set; }
         public IDeliveryUserRepository DeliveryUser { get; private set; }
         public IOrderAssignRepository OrderAssign { get; private set; }
+        public IRetailMessagesRepository RetailMessages { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -50,7 +51,7 @@ namespace RetailManagementSystem.DataAccess.Repository
             Bill  = new BillRepository(_db);
             Order = new OrderRepository(_db);
             StoreUser = new StoreRepository(_db);
-
+            RetailMessages = new RetailMessagesRepository(_db);
         }
 
         public void Save()
