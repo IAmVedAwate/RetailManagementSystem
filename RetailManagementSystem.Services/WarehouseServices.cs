@@ -44,7 +44,12 @@ namespace RetailManagementSystem.Services
                 var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
                 userId = mainWarehouseOwner?.WarehouseId ?? 0;
             }
-            IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock.GetAll(u => u.WarehouseId == userId, includeProperties: ["Product"]);
+            // Sort by Quantity in ascending order
+            IEnumerable<Stock> stocksFromDb = _unitOfWork.Stock
+                .GetAll(u => u.WarehouseId == userId, includeProperties: ["Product"])
+                .OrderBy(s => s.Quantity)
+                .ToList();
+
             _response.Result = stocksFromDb;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
@@ -58,11 +63,17 @@ namespace RetailManagementSystem.Services
                 var mainWarehouseOwner = _unitOfWork.RetailerUser.Get(u => u.Email == email);
                 userId = mainWarehouseOwner?.WarehouseId ?? 0;
             }
-            IEnumerable<RetailMessages> msgFromDb = _unitOfWork.RetailMessages.GetAll(u => u.WarehouseId == userId);
+            // Sort by Id descending (newest first)
+            IEnumerable<RetailMessages> msgFromDb = _unitOfWork.RetailMessages
+                .GetAll(u => u.WarehouseId == userId)
+                .OrderByDescending(m => m.Id)
+                .ToList();
+
             _response.Result = msgFromDb;
             _response.StatusCode = HttpStatusCode.OK;
             return (_response);
         }
+
 
         public ApiResponse AddStockInWarehouseSV(StockDTO addStockDTO, string email)
         {
@@ -83,8 +94,8 @@ namespace RetailManagementSystem.Services
                 stockFromDb.IsReturnable = addStockDTO.IsReturnable;
                 stockFromDb.LastUpdated = DateTime.Now;
                 stockFromDb.WarehouseId = userId;
-
-                _unitOfWork.Stock.Add(stockFromDb);
+                if (stockFromDb.Quantity > 0)
+                    _unitOfWork.Stock.Add(stockFromDb);
                 _response.Result = stockFromDb;
                 _response.StatusCode = HttpStatusCode.Created;
                 

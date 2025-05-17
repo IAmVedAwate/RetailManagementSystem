@@ -25,7 +25,6 @@ namespace RetailManagementSystem.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> GetAdvertisements()
         {
             ApiResponse result = _unitOfServices.AdvertisementService.GetAdvertisementsSV();
